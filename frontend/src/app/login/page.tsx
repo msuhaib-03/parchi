@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 
+const inputCls = 'w-full py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent';
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -63,7 +65,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="fa22bscs0001@maju.edu.pk"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent"
+                  className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
             </div>
@@ -81,7 +83,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent"
+                  className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
             </div>

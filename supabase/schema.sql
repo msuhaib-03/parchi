@@ -105,9 +105,12 @@ CREATE TRIGGER on_referrals_updated
 -- ─── AUTO-CREATE PROFILE ON SIGNUP ────────────────────────────────────────────
 -- Fires whenever a new user signs up via Supabase Auth
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name, role, department, batch_year)
+  INSERT INTO public.profiles (id, email, full_name, role, department, batch_year)
   VALUES (
     NEW.id,
     NEW.email,
@@ -118,7 +121,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

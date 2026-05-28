@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, User, Loader2 } from 'lucide-react';
 import { DEPARTMENTS } from '@/types';
 
+// Shared input className — explicit text + bg so it's always visible
+const inputCls = 'w-full py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300';
+
 export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -40,6 +43,10 @@ export default function SignupPage() {
     }
     if (!form.department) {
       setError('Please select your department.');
+      return;
+    }
+    if (!form.batch_year || isNaN(form.batch_year)) {
+      setError('Please enter a valid batch year.');
       return;
     }
 
@@ -76,10 +83,7 @@ export default function SignupPage() {
             We sent a confirmation link to <strong>{form.email}</strong>.
             Click it to activate your account and you&apos;re in.
           </p>
-          <Link
-            href="/login"
-            className="mt-6 inline-block text-indigo-600 font-medium text-sm hover:underline"
-          >
+          <Link href="/login" className="mt-6 inline-block text-indigo-600 font-medium text-sm hover:underline">
             Back to login
           </Link>
         </div>
@@ -90,7 +94,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
+
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-extrabold text-indigo-600">
             Parchi<span className="text-gray-400 font-normal">.maju</span>
@@ -110,9 +114,9 @@ export default function SignupPage() {
                   type="text"
                   value={form.full_name}
                   onChange={(e) => update('full_name', e.target.value)}
-                  placeholder="Zara Ahmed"
+                  placeholder="Muhammad Suhaib"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
             </div>
@@ -126,9 +130,9 @@ export default function SignupPage() {
                   type="email"
                   value={form.email}
                   onChange={(e) => update('email', e.target.value)}
-                  placeholder="fa22bscs0001@maju.edu.pk"
+                  placeholder="fa22bscs0114@maju.edu.pk"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
             </div>
@@ -144,7 +148,7 @@ export default function SignupPage() {
                   onChange={(e) => update('password', e.target.value)}
                   placeholder="Min. 8 characters"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
             </div>
@@ -161,7 +165,7 @@ export default function SignupPage() {
                     className={`py-3 rounded-xl border-2 text-sm font-medium capitalize transition-colors ${
                       form.role === r
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                     }`}
                   >
                     {r === 'student' ? '🎓 Student' : '💼 Alumni'}
@@ -177,7 +181,7 @@ export default function SignupPage() {
                 value={form.department}
                 onChange={(e) => update('department', e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                className={`${inputCls} px-4`}
               >
                 <option value="">Select your department</option>
                 {DEPARTMENTS.map((d) => (
@@ -191,12 +195,16 @@ export default function SignupPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Batch Year</label>
               <input
                 type="number"
-                value={form.batch_year}
-                onChange={(e) => update('batch_year', parseInt(e.target.value))}
+                value={isNaN(form.batch_year) ? '' : form.batch_year}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  update('batch_year', isNaN(val) ? 0 : val);
+                }}
                 min={2000}
                 max={2030}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder="e.g. 2022"
+                className={`${inputCls} px-4`}
               />
             </div>
 
