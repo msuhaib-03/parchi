@@ -121,7 +121,7 @@ export default function LandingPage() {
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
       <footer className="py-6 px-4 text-center text-xs text-gray-400 border-t border-gray-100">
-        Built with ❤️ at MAJU &nbsp;·&nbsp; Free forever &nbsp;·&nbsp; Only for <strong>@maju.edu.pk</strong>
+        Built with ❤️ at MAJU &nbsp;·&nbsp; Free forever &nbsp;·&nbsp; Only for <strong>@maju.edu.pk</strong> &nbsp;·&nbsp; © Muhammad Suhaib
       </footer>
     </div>
   );
