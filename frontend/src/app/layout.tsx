@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   description:
     'Connect MAJU students with alumni for referrals, mentorship, and industry insights. Bridge the gap — talent should speak louder than connections.',
   keywords: ['MAJU', 'alumni', 'referral', 'mentorship', 'university', 'Pakistan', 'networking'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Parchi',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +35,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <meta name="theme-color" content="#4f46e5" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <link rel="icon" href="/icon-192.svg" type="image/svg+xml" />
+      </head>
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">{children}</body>
     </html>
   );
