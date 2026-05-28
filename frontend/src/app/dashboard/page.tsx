@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Users, Briefcase, MessageCircle, ArrowRight, CheckCircle, Clock, XCircle } from 'lucide-react';
+import LogoutButton from '@/components/LogoutButton';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -18,7 +19,13 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single();
 
-  if (!profile) redirect('/onboarding');
+  // Send alumni with no company, or anyone with no bio, to onboarding
+  const needsOnboarding =
+    !profile ||
+    (profile.role === 'alumni' && !profile.current_company) ||
+    (profile.role === 'student' && (!profile.skills || profile.skills.length === 0) && !profile.bio);
+
+  if (needsOnboarding) redirect('/onboarding');
 
   const isAlumni = profile.role === 'alumni';
 
@@ -80,9 +87,10 @@ export default async function DashboardPage() {
                 </span>
               )}
             </Link>
-            <Link href={`/profile/${user.id}`} className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+            <Link href={`/profile/${user.id}`} className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm" title="My Profile">
               {profile.full_name?.[0]?.toUpperCase()}
             </Link>
+            <LogoutButton />
           </div>
         </div>
       </nav>
