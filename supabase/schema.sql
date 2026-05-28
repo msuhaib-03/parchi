@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
   -- Alumni-specific fields
   current_company       TEXT,
-  current_role          TEXT,
+  job_title          TEXT,
   linkedin_url          TEXT,
   is_open_to_referrals  BOOLEAN DEFAULT FALSE,
 

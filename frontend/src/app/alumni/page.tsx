@@ -171,7 +171,7 @@ function AlumniCard({
       {person.current_company && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Briefcase size={14} className="text-gray-400" />
-          <span className="font-medium">{person.current_role}</span>
+          <span className="font-medium">{person.job_title}</span>
           <span className="text-gray-400">@</span>
           <span>{person.current_company}</span>
         </div>

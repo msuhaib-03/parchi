@@ -149,7 +149,7 @@ function ReferralCard({
             <p className="text-xs text-gray-500 mt-0.5">
               {isAlumni
                 ? `${request.requester?.department} · Batch ${request.requester?.batch_year}`
-                : `${request.alumni?.current_role} @ ${request.alumni?.current_company}`}
+                : `${request.alumni?.job_title} @ ${request.alumni?.current_company}`}
             </p>
           </div>
         </div>

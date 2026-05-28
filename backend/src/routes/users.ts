@@ -39,7 +39,7 @@ router.post(
       department,
       batch_year,
       current_company,
-      current_role,
+      job_title,
       linkedin_url,
       bio,
       is_open_to_referrals,
@@ -55,7 +55,7 @@ router.post(
       department,
       batch_year,
       current_company: current_company ?? null,
-      current_role: current_role ?? null,
+      job_title: job_title ?? null,
       linkedin_url: linkedin_url ?? null,
       bio: bio ?? null,
       is_open_to_referrals: is_open_to_referrals ?? false,
@@ -82,7 +82,7 @@ router.get('/alumni', requireAuth, async (req: Request, res: Response) => {
 
   let queryBuilder = supabase
     .from('profiles')
-    .select('id, full_name, department, batch_year, current_company, current_role, bio, is_open_to_referrals, profile_picture_url, linkedin_url')
+    .select('id, full_name, department, batch_year, current_company, job_title, bio, is_open_to_referrals, profile_picture_url, linkedin_url')
     .eq('role', 'alumni')
     .order('batch_year', { ascending: false })
     .range((+page - 1) * +limit, +page * +limit - 1);
@@ -109,7 +109,7 @@ router.get(
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, department, batch_year, current_company, current_role, bio, is_open_to_referrals, profile_picture_url, linkedin_url, role, skills')
+      .select('id, full_name, department, batch_year, current_company, job_title, bio, is_open_to_referrals, profile_picture_url, linkedin_url, role, skills')
       .eq('id', req.params.id)
       .single();
 

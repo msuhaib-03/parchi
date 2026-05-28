@@ -68,7 +68,7 @@ router.get('/mine', requireAuth, async (req: Request, res: Response) => {
     .select(`
       *,
       alumni:alumni_id (
-        id, full_name, current_company, current_role, profile_picture_url
+        id, full_name, current_company, job_title, profile_picture_url
       )
     `)
     .eq('requester_id', req.user!.id)

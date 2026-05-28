@@ -14,7 +14,7 @@ export interface Profile {
 
   // Alumni fields
   current_company?: string | null;
-  current_role?: string | null;
+  job_title?: string | null;
   linkedin_url?: string | null;
   is_open_to_referrals?: boolean;
 
@@ -45,7 +45,7 @@ export interface ReferralRequest {
   updated_at: string;
 
   // Joined fields (from API)
-  alumni?: Pick<Profile, 'id' | 'full_name' | 'current_company' | 'current_role' | 'profile_picture_url'>;
+  alumni?: Pick<Profile, 'id' | 'full_name' | 'current_company' | 'job_title' | 'profile_picture_url'>;
   requester?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year' | 'profile_picture_url' | 'linkedin_url' | 'skills'>;
 }
 
@@ -86,7 +86,7 @@ export interface ProfileFormData {
   bio?: string;
   // Alumni
   current_company?: string;
-  current_role?: string;
+  job_title?: string;
   linkedin_url?: string;
   is_open_to_referrals?: boolean;
   // Student

@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-gray-500 mt-1 text-sm">
             {isAlumni
-              ? `${profile.current_role ?? 'Alumni'} at ${profile.current_company ?? 'your company'}`
+              ? `${profile.job_title ?? 'Alumni'} at ${profile.current_company ?? 'your company'}`
               : `${profile.department} · Batch ${profile.batch_year}`}
           </p>
         </div>

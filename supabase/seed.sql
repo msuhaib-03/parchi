@@ -6,7 +6,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Sample alumni
-INSERT INTO profiles (id, email, full_name, role, department, batch_year, current_company, current_role, bio, is_open_to_referrals, linkedin_url) VALUES
+INSERT INTO profiles (id, email, full_name, role, department, batch_year, current_company, job_title, bio, is_open_to_referrals, linkedin_url) VALUES
   ('00000000-0000-0000-0000-000000000001', 'ali.hassan@maju.edu.pk', 'Ali Hassan', 'alumni', 'Computer Science', 2020, 'Systems Limited', 'Software Engineer', 'MAJU CS grad working at Systems. Happy to help juniors with referrals!', true, 'https://linkedin.com/in/alihassan'),
   ('00000000-0000-0000-0000-000000000002', 'sara.khan@maju.edu.pk', 'Sara Khan', 'alumni', 'Business Administration', 2019, 'Unilever Pakistan', 'Brand Manager', 'MBA track, now in FMCG. Reach out for BBA/MBA career questions.', true, 'https://linkedin.com/in/sarakhan'),
   ('00000000-0000-0000-0000-000000000003', 'usman.malik@maju.edu.pk', 'Usman Malik', 'alumni', 'Computer Science', 2021, 'Arbisoft', 'Full Stack Developer', 'Django + React dev. Open to referrals for Arbisoft openings.', true, 'https://linkedin.com/in/usmanmalik')
