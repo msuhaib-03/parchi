@@ -12,6 +12,7 @@ function MessagesPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -22,6 +23,16 @@ function MessagesPage() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const [sending, setSending] = useState(false);
+  const [isLive, setIsLive] = useState(false);
+
+  // Cleanup realtime channel on unmount
+  useEffect(() => {
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, [supabase]);
 
   // Load user + conversations
   useEffect(() => {
@@ -59,7 +70,6 @@ function MessagesPage() {
           .select('id, full_name, job_title, current_company, role, department')
           .in('id', partnerIds);
 
-        // Get unread counts
         const { data: unreadData } = await supabase
           .from('messages')
           .select('sender_id')
@@ -81,7 +91,6 @@ function MessagesPage() {
 
       setLoadingConvos(false);
 
-      // Open conversation from query param (?with=userId)
       const withId = searchParams.get('with');
       if (withId) openConversation(withId, user.id);
     })();
@@ -90,6 +99,7 @@ function MessagesPage() {
   const openConversation = useCallback(async (partnerId: string, userId?: string) => {
     setActivePartnerId(partnerId);
     setLoadingThread(true);
+    setIsLive(false);
 
     // Fetch partner profile
     const { data: partner } = await supabase
@@ -120,10 +130,55 @@ function MessagesPage() {
       .eq('receiver_id', uid)
       .eq('is_read', false);
 
-    // Update unread count in sidebar
     setConversations((prev) =>
       prev.map((c) => c.partner.id === partnerId ? { ...c, unread: 0 } : c)
     );
+
+    // ── Realtime subscription ──────────────────────────────────────────────
+    // Remove any previous channel first
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase
+      .channel(`messages:${uid}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${uid}`,
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+
+          if (msg.sender_id === partnerId) {
+            // Message is from the currently open conversation — append instantly
+            setMessages((prev) => {
+              if (prev.find((m) => m.id === msg.id)) return prev; // dedupe
+              return [...prev, msg];
+            });
+            // Mark as read immediately since the chat is open
+            supabase.from('messages').update({ is_read: true }).eq('id', msg.id);
+          } else {
+            // Message is from a different conversation — bump unread badge in sidebar
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.partner.id === msg.sender_id
+                  ? { ...c, unread: c.unread + 1 }
+                  : c
+              )
+            );
+          }
+        }
+      )
+      .subscribe((status) => {
+        setIsLive(status === 'SUBSCRIBED');
+      });
+
+    channelRef.current = channel;
   }, [supabase, currentUser]);
 
   // Scroll to bottom when messages change
@@ -151,7 +206,6 @@ function MessagesPage() {
     setMessages((prev) => [...prev, data as Message]);
     setNewMessage('');
 
-    // Add to conversations if new
     if (!conversations.find((c) => c.partner.id === activePartnerId)) {
       setConversations((prev) => [
         { partner: activePartner!, unread: 0 },
@@ -255,7 +309,7 @@ function MessagesPage() {
                 <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
                   {activePartner?.full_name?.[0]?.toUpperCase()}
                 </div>
-                <div>
+                <div className="flex-1">
                   <Link href={`/profile/${activePartnerId}`} className="text-sm font-semibold text-gray-900 hover:text-indigo-600">
                     {activePartner?.full_name}
                   </Link>
@@ -265,6 +319,13 @@ function MessagesPage() {
                     </p>
                   )}
                 </div>
+                {/* Live indicator */}
+                {isLive && (
+                  <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Live
+                  </div>
+                )}
               </div>
 
               {/* Messages */}
