@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Users, Briefcase, MessageCircle, ArrowRight, Star, Shield, Zap } from 'lucide-react';
 
 export default function LandingPage() {
@@ -101,6 +102,38 @@ export default function LandingPage() {
             <Stat value="All depts" label="Not just CS" />
             <Stat value="Free" label="Always, forever" />
             <Stat value="MAJU only" label="Trusted network" />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Community Logos ─────────────────────────────────────────────────── */}
+      <section className="py-14 px-4 bg-white border-t border-gray-100">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-10">
+            Part of the MAJU community
+          </p>
+          <div className="flex items-center justify-center gap-12 flex-wrap">
+            <Image
+              src="/logos/maju.png"
+              alt="Muhammad Ali Jinnah University"
+              width={80}
+              height={80}
+              className="opacity-60 hover:opacity-100 transition-opacity duration-200 object-contain"
+            />
+            <Image
+              src="/logos/ieee.png"
+              alt="IEEE"
+              width={110}
+              height={55}
+              className="opacity-60 hover:opacity-100 transition-opacity duration-200 object-contain"
+            />
+            <Image
+              src="/logos/acm.png"
+              alt="Association for Computing Machinery"
+              width={130}
+              height={55}
+              className="opacity-60 hover:opacity-100 transition-opacity duration-200 object-contain"
+            />
           </div>
         </div>
       </section>
