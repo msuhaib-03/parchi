@@ -25,7 +25,7 @@ router.post(
   requireAuth,
   [
     body('full_name').trim().notEmpty().withMessage('Full name is required.'),
-    body('role').isIn(['student', 'alumni']).withMessage('Role must be student or alumni.'),
+    body('role').isIn(['student', 'alumni', 'teacher']).withMessage('Role must be student, alumni, or teacher.'),
     body('department').trim().notEmpty().withMessage('Department is required.'),
     body('batch_year').isInt({ min: 2000, max: 2030 }).withMessage('Valid batch year required.'),
   ],
