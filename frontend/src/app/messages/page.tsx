@@ -48,7 +48,6 @@ function MessagesPage() {
 
       setCurrentUser(profile as Profile);
 
-      // Load all conversations (people you've messaged)
       const { data: sent } = await supabase
         .from('messages')
         .select('receiver_id')
@@ -101,7 +100,6 @@ function MessagesPage() {
     setLoadingThread(true);
     setIsLive(false);
 
-    // Fetch partner profile
     const { data: partner } = await supabase
       .from('profiles')
       .select('*')
@@ -109,7 +107,6 @@ function MessagesPage() {
       .single();
     setActivePartner(partner as Profile);
 
-    // Fetch message thread
     const uid = userId ?? currentUser?.id;
     if (!uid) return;
 
@@ -122,7 +119,6 @@ function MessagesPage() {
     setMessages((thread ?? []) as Message[]);
     setLoadingThread(false);
 
-    // Mark received messages as read
     await supabase
       .from('messages')
       .update({ is_read: true })
@@ -134,8 +130,6 @@ function MessagesPage() {
       prev.map((c) => c.partner.id === partnerId ? { ...c, unread: 0 } : c)
     );
 
-    // ── Realtime subscription ──────────────────────────────────────────────
-    // Remove any previous channel first
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
@@ -155,15 +149,12 @@ function MessagesPage() {
           const msg = payload.new as Message;
 
           if (msg.sender_id === partnerId) {
-            // Message is from the currently open conversation — append instantly
             setMessages((prev) => {
-              if (prev.find((m) => m.id === msg.id)) return prev; // dedupe
+              if (prev.find((m) => m.id === msg.id)) return prev;
               return [...prev, msg];
             });
-            // Mark as read immediately since the chat is open
             supabase.from('messages').update({ is_read: true }).eq('id', msg.id);
           } else {
-            // Message is from a different conversation — bump unread badge in sidebar
             setConversations((prev) =>
               prev.map((c) =>
                 c.partner.id === msg.sender_id
@@ -181,7 +172,6 @@ function MessagesPage() {
     channelRef.current = channel;
   }, [supabase, currentUser]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -224,23 +214,23 @@ function MessagesPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 shrink-0">
+      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0 transition-colors">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-gray-700 transition-colors">
+          <Link href="/dashboard" className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-lg font-bold text-gray-900">Messages</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Messages</h1>
         </div>
       </nav>
 
       <div className="flex-1 flex max-w-6xl mx-auto w-full overflow-hidden">
 
-        {/* ─── Sidebar ────────────────────────────────────────────────────────── */}
-        <div className={`w-full md:w-80 shrink-0 bg-white border-r border-gray-100 flex flex-col ${activePartnerId ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-4 border-b border-gray-50">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Conversations</p>
+        {/* ─── Sidebar ─────────────────────────────────────────────────────────── */}
+        <div className={`w-full md:w-80 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-colors ${activePartnerId ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Conversations</p>
           </div>
 
           {loadingConvos ? (
@@ -249,10 +239,10 @@ function MessagesPage() {
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-10">
-              <MessageCircle size={32} className="text-gray-200 mb-3" />
-              <p className="text-sm font-medium text-gray-500">No conversations yet</p>
-              <p className="text-xs text-gray-400 mt-1">Find an alumni and start a chat</p>
-              <Link href="/alumni" className="mt-4 text-sm text-indigo-600 font-medium hover:underline">
+              <MessageCircle size={32} className="text-gray-200 dark:text-gray-700 mb-3" />
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No conversations yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Find an alumni and start a chat</p>
+              <Link href="/alumni" className="mt-4 text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
                 Browse alumni →
               </Link>
             </div>
@@ -262,23 +252,25 @@ function MessagesPage() {
                 <button
                   key={partner.id}
                   onClick={() => openConversation(partner.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 ${
-                    activePartnerId === partner.id ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : ''
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left border-b border-gray-50 dark:border-gray-800 ${
+                    activePartnerId === partner.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-2 border-l-indigo-500'
+                      : ''
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold shrink-0">
                     {partner.full_name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{partner.full_name}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{partner.full_name}</p>
                       {unread > 0 && (
                         <span className="bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shrink-0">
                           {unread}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
                       {partner.role === 'alumni' ? `${partner.job_title ?? 'Alumni'} @ ${partner.current_company ?? ''}` : partner.department}
                     </p>
                   </div>
@@ -288,40 +280,39 @@ function MessagesPage() {
           )}
         </div>
 
-        {/* ─── Thread ─────────────────────────────────────────────────────────── */}
+        {/* ─── Thread ──────────────────────────────────────────────────────────── */}
         <div className={`flex-1 flex flex-col ${!activePartnerId ? 'hidden md:flex' : 'flex'}`}>
           {!activePartnerId ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-              <MessageCircle size={48} className="text-gray-200 mb-4" />
-              <p className="text-gray-500 font-medium">Select a conversation</p>
-              <p className="text-sm text-gray-400 mt-1">or start a new one from the alumni page</p>
+              <MessageCircle size={48} className="text-gray-200 dark:text-gray-700 mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">Select a conversation</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">or start a new one from the alumni page</p>
             </div>
           ) : (
             <>
               {/* Thread header */}
-              <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 shrink-0">
+              <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center gap-3 shrink-0 transition-colors">
                 <button
-                  className="md:hidden text-gray-400 hover:text-gray-700"
+                  className="md:hidden text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   onClick={() => setActivePartnerId(null)}
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm">
                   {activePartner?.full_name?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <Link href={`/profile/${activePartnerId}`} className="text-sm font-semibold text-gray-900 hover:text-indigo-600">
+                  <Link href={`/profile/${activePartnerId}`} className="text-sm font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">
                     {activePartner?.full_name}
                   </Link>
                   {activePartner?.current_company && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {activePartner.job_title} @ {activePartner.current_company}
                     </p>
                   )}
                 </div>
-                {/* Live indicator */}
                 {isLive && (
-                  <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                  <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     Live
                   </div>
@@ -329,15 +320,15 @@ function MessagesPage() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50 dark:bg-gray-950 transition-colors">
                 {loadingThread ? (
                   <div className="flex justify-center py-10">
                     <Loader2 size={24} className="animate-spin text-indigo-400" />
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
-                    <p className="text-sm text-gray-400">No messages yet.</p>
-                    <p className="text-xs text-gray-400 mt-1">Say hi to {activePartner?.full_name?.split(' ')[0]}! 👋</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">No messages yet.</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Say hi to {activePartner?.full_name?.split(' ')[0]}! 👋</p>
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -347,10 +338,10 @@ function MessagesPage() {
                         <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                           isMine
                             ? 'bg-indigo-600 text-white rounded-br-sm'
-                            : 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm'
+                            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-sm shadow-sm'
                         }`}>
                           <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${isMine ? 'text-indigo-200' : 'text-gray-400'}`}>
+                          <p className={`text-xs mt-1 ${isMine ? 'text-indigo-200' : 'text-gray-400 dark:text-gray-500'}`}>
                             {formatTime(msg.created_at)}
                           </p>
                         </div>
@@ -362,7 +353,7 @@ function MessagesPage() {
               </div>
 
               {/* Send box */}
-              <div className="bg-white border-t border-gray-100 p-4 shrink-0">
+              <div className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 shrink-0 transition-colors">
                 <div className="flex gap-3 items-end">
                   <textarea
                     value={newMessage}
@@ -375,13 +366,13 @@ function MessagesPage() {
                     }}
                     placeholder="Type a message… (Enter to send)"
                     rows={1}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                     style={{ maxHeight: '120px' }}
                   />
                   <button
                     onClick={sendMessage}
                     disabled={sending || !newMessage.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white p-3 rounded-xl transition-colors shrink-0"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 dark:disabled:bg-indigo-900 text-white p-3 rounded-xl transition-colors shrink-0"
                   >
                     {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                   </button>
@@ -395,10 +386,9 @@ function MessagesPage() {
   );
 }
 
-// Wrap in Suspense so useSearchParams doesn't break static export
 export default function MessagesPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 size={32} className="animate-spin text-indigo-400" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950"><Loader2 size={32} className="animate-spin text-indigo-400" /></div>}>
       <MessagesPage />
     </Suspense>
   );
