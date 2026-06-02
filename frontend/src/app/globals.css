@@ -6,7 +6,6 @@
 :root {
   color-scheme: light;
 }
-
 .dark {
   color-scheme: dark;
 }
@@ -21,17 +20,84 @@ input, textarea, select {
   background-color: #ffffff;
   border-color: #e5e7eb;
 }
-
-input::placeholder, textarea::placeholder {
-  color: #9ca3af;
-}
+input::placeholder, textarea::placeholder { color: #9ca3af; }
 
 .dark input, .dark textarea, .dark select {
   color: #f1f5f9;
   background-color: #1e293b;
   border-color: #334155;
 }
+.dark input::placeholder, .dark textarea::placeholder { color: #64748b; }
 
-.dark input::placeholder, .dark textarea::placeholder {
-  color: #64748b;
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-16px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes borderPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
+}
+
+/* ── Animation utility classes ────────────────────────────────────────────── */
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.65s ease-out forwards;
+}
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+.animate-float      { animation: float 5s ease-in-out infinite; }
+.animate-float-slow { animation: floatSlow 7s ease-in-out infinite; }
+.animate-float-delayed { animation: float 5s ease-in-out 2.5s infinite; }
+
+/* Stagger delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+
+/* ── Gradient animated text ───────────────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7, #6366f1);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s ease infinite;
+}
+
+/* ── Dot grid background ──────────────────────────────────────────────────── */
+.bg-dot-grid {
+  background-image: radial-gradient(circle, #6366f118 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.dark .bg-dot-grid {
+  background-image: radial-gradient(circle, #6366f130 1px, transparent 1px);
 }
