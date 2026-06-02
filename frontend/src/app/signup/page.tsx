@@ -7,8 +7,19 @@ import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, User, Loader2 } from 'lucide-react';
 import { DEPARTMENTS } from '@/types';
 
-// Shared input className — explicit text + bg so it's always visible
 const inputCls = 'w-full py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300';
+
+// Allowed email domains per role
+const STUDENT_DOMAIN = '@maju.edu.pk';
+const ALUMNI_TEACHER_DOMAINS = ['@maju.edu.pk', '@jinnah.edu', '@gmail.com'];
+
+type Role = 'student' | 'alumni' | 'teacher';
+
+const ROLES: { value: Role; label: string; emoji: string }[] = [
+  { value: 'student',  label: 'Student',  emoji: '🎓' },
+  { value: 'alumni',   label: 'Alumni',   emoji: '💼' },
+  { value: 'teacher',  label: 'Teacher',  emoji: '👨‍🏫' },
+];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -18,7 +29,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     full_name: '',
-    role: 'student' as 'student' | 'alumni',
+    role: 'student' as Role,
     department: '',
     batch_year: new Date().getFullYear(),
   });
@@ -29,12 +40,25 @@ export default function SignupPage() {
   const update = (field: string, value: string | number) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const isStudent = form.role === 'student';
+
+  const validateEmail = (email: string, role: Role) => {
+    if (role === 'student') {
+      return email.endsWith(STUDENT_DOMAIN);
+    }
+    return ALUMNI_TEACHER_DOMAINS.some((d) => email.endsWith(d));
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!form.email.endsWith('@maju.edu.pk')) {
-      setError('Only @maju.edu.pk email addresses are allowed.');
+    if (!validateEmail(form.email, form.role)) {
+      if (isStudent) {
+        setError('Students must use their @maju.edu.pk university email.');
+      } else {
+        setError('Please use your @maju.edu.pk, @jinnah.edu, or @gmail.com email.');
+      }
       return;
     }
     if (form.password.length < 8) {
@@ -45,7 +69,7 @@ export default function SignupPage() {
       setError('Please select your department.');
       return;
     }
-    if (!form.batch_year || isNaN(form.batch_year)) {
+    if (isStudent && (!form.batch_year || isNaN(form.batch_year))) {
       setError('Please enter a valid batch year.');
       return;
     }
@@ -65,11 +89,7 @@ export default function SignupPage() {
     });
     setLoading(false);
 
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
-
+    if (authError) { setError(authError.message); return; }
     setSuccess(true);
   };
 
@@ -121,20 +141,54 @@ export default function SignupPage() {
               </div>
             </div>
 
+            {/* Role selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">I am a…</label>
+              <div className="grid grid-cols-3 gap-2">
+                {ROLES.map(({ value, label, emoji }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => update('role', value)}
+                    className={`py-3 rounded-xl border-2 text-sm font-medium transition-colors ${
+                      form.role === value
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">University Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {isStudent ? 'University Email' : 'Email Address'}
+              </label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => update('email', e.target.value)}
-                  placeholder="fa22bscs0114@maju.edu.pk"
+                  placeholder={
+                    isStudent
+                      ? 'fa22bscs0114@maju.edu.pk'
+                      : form.role === 'teacher'
+                      ? 'yourname@jinnah.edu or @gmail.com'
+                      : 'yourname@gmail.com or @maju.edu.pk'
+                  }
                   required
                   className={`${inputCls} pl-10 pr-4`}
                 />
               </div>
+              <p className="text-xs text-gray-400 mt-1">
+                {isStudent
+                  ? 'Only @maju.edu.pk emails for students'
+                  : 'Accepted: @maju.edu.pk · @jinnah.edu · @gmail.com'}
+              </p>
             </div>
 
             {/* Password */}
@@ -150,27 +204,6 @@ export default function SignupPage() {
                   required
                   className={`${inputCls} pl-10 pr-4`}
                 />
-              </div>
-            </div>
-
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">I am a...</label>
-              <div className="grid grid-cols-2 gap-3">
-                {(['student', 'alumni'] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => update('role', r)}
-                    className={`py-3 rounded-xl border-2 text-sm font-medium capitalize transition-colors ${
-                      form.role === r
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
-                    }`}
-                  >
-                    {r === 'student' ? '🎓 Student' : '💼 Alumni'}
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -190,23 +223,25 @@ export default function SignupPage() {
               </select>
             </div>
 
-            {/* Batch Year */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Batch Year</label>
-              <input
-                type="number"
-                value={isNaN(form.batch_year) ? '' : form.batch_year}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  update('batch_year', isNaN(val) ? 0 : val);
-                }}
-                min={2000}
-                max={2030}
-                required
-                placeholder="e.g. 2022"
-                className={`${inputCls} px-4`}
-              />
-            </div>
+            {/* Batch Year — students only */}
+            {isStudent && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Batch Year</label>
+                <input
+                  type="number"
+                  value={isNaN(form.batch_year) ? '' : form.batch_year}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    update('batch_year', isNaN(val) ? 0 : val);
+                  }}
+                  min={2000}
+                  max={2030}
+                  required
+                  placeholder="e.g. 2022"
+                  className={`${inputCls} px-4`}
+                />
+              </div>
+            )}
 
             {/* Error */}
             {error && (

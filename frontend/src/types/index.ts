@@ -1,6 +1,6 @@
 // ─── Core domain types matching the Supabase schema ───────────────────────────
 
-export type UserRole = 'student' | 'alumni';
+export type UserRole = 'student' | 'alumni' | 'teacher';
 
 export type ReferralStatus = 'pending' | 'accepted' | 'declined' | 'referred';
 

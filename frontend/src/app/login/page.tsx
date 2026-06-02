@@ -8,6 +8,8 @@ import { Mail, Lock, Loader2 } from 'lucide-react';
 
 const inputCls = 'w-full py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent';
 
+const ALLOWED_DOMAINS = ['@maju.edu.pk', '@jinnah.edu', '@gmail.com'];
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -21,8 +23,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.endsWith('@maju.edu.pk')) {
-      setError('Only @maju.edu.pk email addresses are allowed.');
+    const validDomain = ALLOWED_DOMAINS.some((d) => email.endsWith(d));
+    if (!validDomain) {
+      setError('Please use your @maju.edu.pk, @jinnah.edu, or @gmail.com email.');
       return;
     }
 
@@ -42,6 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-4">
       <div className="w-full max-w-md">
+
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-extrabold text-indigo-600">
@@ -52,18 +56,17 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <form onSubmit={handleLogin} className="space-y-5">
+
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                University Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="fa22bscs0001@maju.edu.pk"
+                  placeholder="your@maju.edu.pk or @gmail.com"
                   required
                   className={`${inputCls} pl-10 pr-4`}
                 />
@@ -72,9 +75,15 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-indigo-600 hover:underline font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -115,7 +124,8 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          Only <strong>@maju.edu.pk</strong> emails accepted
+          Students: <strong>@maju.edu.pk</strong> &nbsp;·&nbsp;
+          Alumni &amp; Teachers: <strong>@maju.edu.pk · @jinnah.edu · @gmail.com</strong>
         </p>
       </div>
     </div>
