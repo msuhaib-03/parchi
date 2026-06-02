@@ -7,7 +7,7 @@ import { usersApi } from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
 import { DEPARTMENTS } from '@/types';
-import { Search, Briefcase, MapPin, ExternalLink, ArrowLeft, Loader2 } from 'lucide-react';
+import { Search, Briefcase, ExternalLink, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
 import ReferralModal from '@/components/ReferralModal';
 
 export default function AlumniPage() {
@@ -197,6 +197,15 @@ function AlumniCard({
           >
             Ask referral
           </button>
+        )}
+        {!isOwnProfile && (
+          <Link
+            href={`/messages?with=${person.id}`}
+            className="p-2 border border-gray-200 rounded-xl text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+            title="Send a message"
+          >
+            <MessageCircle size={16} />
+          </Link>
         )}
         {person.linkedin_url && (
           <a
