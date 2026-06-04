@@ -4,8 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Users, Briefcase, MessageCircle, ArrowRight, CheckCircle, Clock } from 'lucide-react';
-import LogoutButton from '@/components/LogoutButton';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { AppNav } from '@/components/AppNav';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -70,46 +69,28 @@ export default async function DashboardPage() {
 
   const unread = messageCount ?? 0;
 
+  // Only include stats with non-zero values
+  const stats = [
+    { value: referralCount, label: isAlumni ? 'Referrals given' : 'Requests sent', icon: <Briefcase size={18} />, color: 'indigo' },
+    { value: pendingCount, label: isAlumni ? 'Pending in inbox' : 'Awaiting reply', icon: <Clock size={18} />, color: 'amber' },
+    { value: unread, label: 'Unread messages', icon: <MessageCircle size={18} />, color: 'violet' },
+  ].filter((s) => s.value > 0);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors">
 
-      {/* ─── Navbar ──────────────────────────────────────────────────────────── */}
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-10 transition-colors">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-indigo-600">
-            Parchi<span className="text-gray-400 dark:text-gray-500 font-normal">.maju</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/alumni" className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Browse Alumni</Link>
-            <Link href="/referrals" className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Referrals</Link>
-            <Link href="/messages" className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative">
-              Messages
-              {unread > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                  {unread}
-                </span>
-              )}
-            </Link>
-            <ThemeToggle />
-            <Link href={`/profile/${user.id}`} className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm" title="My Profile">
-              {profile.full_name?.[0]?.toUpperCase()}
-            </Link>
-            <LogoutButton />
-          </div>
-        </div>
-      </nav>
+      <AppNav userName={profile.full_name} userId={user.id} unreadCount={unread} />
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-7">
 
         {/* ─── Hero Banner ─────────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-8 mb-8 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-950">
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
-          <div className="absolute right-20 bottom-0 w-32 h-32 bg-purple-400/20 rounded-full blur-xl" />
-          <div className="absolute left-1/2 -bottom-6 w-24 h-24 bg-indigo-300/20 rounded-full blur-xl" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-7 mb-7 text-white">
+          <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute right-16 bottom-0 w-28 h-28 bg-purple-300/20 rounded-full blur-xl pointer-events-none" />
           <div className="relative">
-            <p className="text-indigo-200 text-sm font-medium mb-1">Welcome back</p>
-            <h1 className="text-3xl font-extrabold tracking-tight">Hey, {firstName} 👋</h1>
-            <p className="text-indigo-200 mt-1.5 text-sm">
+            <p className="text-indigo-200 text-xs font-medium mb-1 uppercase tracking-wider">Welcome back</p>
+            <h1 className="text-2xl font-extrabold tracking-tight">Hey, {firstName}</h1>
+            <p className="text-indigo-200 mt-1 text-sm">
               {isAlumni
                 ? `${profile.job_title ?? 'Alumni'} · ${profile.current_company ?? 'your company'}`
                 : isTeacher
@@ -119,59 +100,69 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ─── Stats ────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-indigo-800 dark:to-indigo-950 p-5 text-white shadow-sm shadow-indigo-200 dark:shadow-none">
-            <Briefcase size={20} className="mb-3 opacity-90" />
-            <div className="text-3xl font-extrabold">{referralCount}</div>
-            <div className="text-xs mt-1 opacity-80">{isAlumni ? 'Referrals given' : 'Requests sent'}</div>
+        {/* ─── Stats — only render if at least one is non-zero ─────────────── */}
+        {stats.length > 0 && (
+          <div className={`grid gap-4 mb-7 ${
+            stats.length === 1 ? 'grid-cols-1 max-w-[200px]' :
+            stats.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+          }`}>
+            {stats.map((stat) => (
+              <StatCard key={stat.label} {...stat} />
+            ))}
           </div>
-          <div className="rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-800 dark:to-orange-950 p-5 text-white shadow-sm shadow-amber-200 dark:shadow-none">
-            <Clock size={20} className="mb-3 opacity-90" />
-            <div className="text-3xl font-extrabold">{pendingCount}</div>
-            <div className="text-xs mt-1 opacity-80">{isAlumni ? 'Pending inbox' : 'Awaiting reply'}</div>
-          </div>
-          <div className="rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 dark:from-violet-800 dark:to-purple-950 p-5 text-white shadow-sm shadow-violet-200 dark:shadow-none">
-            <MessageCircle size={20} className="mb-3 opacity-90" />
-            <div className="text-3xl font-extrabold">{unread}</div>
-            <div className="text-xs mt-1 opacity-80">Unread messages</div>
-          </div>
-        </div>
+        )}
 
         {/* ─── Quick Actions ────────────────────────────────────────────────── */}
-        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Quick actions</p>
-        <div className="grid md:grid-cols-2 gap-4">
+        <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-4">Quick actions</p>
+        <div className="grid md:grid-cols-2 gap-3">
           {isAlumni ? (
             <>
-              <ActionCard href="/referrals" icon={<Briefcase size={22} />} title="Review referral requests"
-                description={pendingCount > 0 ? `${pendingCount} requests waiting for your response` : 'No pending requests right now'}
+              <ActionCard href="/referrals" icon={<Briefcase size={20} />} title="Review referral requests"
+                description={pendingCount > 0 ? `${pendingCount} request${pendingCount > 1 ? 's' : ''} waiting for your response` : 'No pending requests right now'}
                 badge={pendingCount > 0 ? String(pendingCount) : undefined} color="indigo" />
-              <ActionCard href={`/profile/${user.id}`} icon={<Users size={22} />} title="Update your profile"
-                description="Keep your company and open-to-referrals status up to date" color="purple" />
+              <ActionCard href={`/profile/${user.id}`} icon={<Users size={20} />} title="Update your profile"
+                description="Keep your company and open-to-referrals status current" color="violet" />
             </>
           ) : isTeacher ? (
             <>
-              <ActionCard href="/alumni" icon={<Users size={22} />} title="Browse alumni"
-                description="See where MAJU graduates are working now" color="indigo" />
-              <ActionCard href={`/profile/${user.id}`} icon={<CheckCircle size={22} />} title="Your profile"
-                description="Update your department and bio" color="purple" />
+              <ActionCard href="/alumni" icon={<Users size={20} />} title="Browse alumni"
+                description="See where MAJU graduates are working today" color="indigo" />
+              <ActionCard href={`/profile/${user.id}`} icon={<CheckCircle size={20} />} title="Your profile"
+                description="Update your department and bio" color="violet" />
             </>
           ) : (
             <>
-              <ActionCard href="/alumni" icon={<Users size={22} />} title="Browse alumni"
+              <ActionCard href="/alumni" icon={<Users size={20} />} title="Browse alumni"
                 description="Find MAJU alumni at companies you want to join" color="indigo" />
-              <ActionCard href="/referrals" icon={<Briefcase size={22} />} title="My referral requests"
-                description={referralCount > 0 ? `You've sent ${referralCount} request${referralCount > 1 ? 's' : ''}` : 'Track your referral requests here'}
-                color="purple" />
+              <ActionCard href="/referrals" icon={<Briefcase size={20} />} title="My referral requests"
+                description={referralCount > 0 ? `You have sent ${referralCount} request${referralCount > 1 ? 's' : ''}` : 'Track your referral requests here'}
+                color="violet" />
             </>
           )}
-          <ActionCard href="/messages" icon={<MessageCircle size={22} />} title="Messages"
+          <ActionCard href="/messages" icon={<MessageCircle size={20} />} title="Messages"
             description={unread > 0 ? `${unread} unread message${unread > 1 ? 's' : ''}` : 'Chat with your connections'}
-            badge={unread > 0 ? String(unread) : undefined} color="pink" />
-          <ActionCard href={`/profile/${user.id}`} icon={<CheckCircle size={22} />} title="Complete your profile"
-            description="A complete profile gets 3× more responses" color="green" />
+            badge={unread > 0 ? String(unread) : undefined} color="purple" />
+          <ActionCard href={`/profile/${user.id}`} icon={<CheckCircle size={20} />} title="Complete your profile"
+            description="A complete profile gets more responses from alumni" color="slate" />
         </div>
       </main>
+    </div>
+  );
+}
+
+function StatCard({ value, label, icon, color }: {
+  value: number; label: string; icon: React.ReactNode; color: string;
+}) {
+  const gradients: Record<string, string> = {
+    indigo: 'from-indigo-500 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900',
+    amber:  'from-amber-400 to-orange-500 dark:from-amber-700 dark:to-orange-900',
+    violet: 'from-violet-500 to-purple-700 dark:from-violet-700 dark:to-purple-900',
+  };
+  return (
+    <div className={`rounded-2xl bg-gradient-to-br ${gradients[color] ?? gradients.indigo} p-5 text-white`}>
+      <div className="opacity-80 mb-3">{icon}</div>
+      <div className="text-3xl font-extrabold tracking-tight">{value}</div>
+      <div className="text-xs mt-1 opacity-70">{label}</div>
     </div>
   );
 }
@@ -179,23 +170,24 @@ export default async function DashboardPage() {
 function ActionCard({ href, icon, title, description, badge, color }: {
   href: string; icon: React.ReactNode; title: string; description: string; badge?: string; color: string;
 }) {
-  const iconColors: Record<string, string> = {
-    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/40',
-    pink:   'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/40',
-    green:  'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40',
+  const iconStyles: Record<string, string> = {
+    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60',
+    violet: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60',
+    slate:  'text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800',
   };
   return (
-    <Link href={href} className="flex items-start gap-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all group">
-      <div className={`p-3 rounded-xl ${iconColors[color] ?? 'text-gray-600 bg-gray-100'} shrink-0`}>{icon}</div>
+    <Link href={href}
+      className="flex items-start gap-4 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl p-5 hover:shadow-md hover:shadow-slate-100/50 dark:hover:shadow-none hover:border-slate-200 dark:hover:border-zinc-700 transition-all group">
+      <div className={`p-2.5 rounded-xl shrink-0 ${iconStyles[color] ?? iconStyles.slate}`}>{icon}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{title}</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-zinc-100 text-sm">{title}</h3>
           {badge && <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">{badge}</span>}
         </div>
-        <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-relaxed">{description}</p>
+        <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5 leading-relaxed">{description}</p>
       </div>
-      <ArrowRight size={16} className="text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 shrink-0 mt-1 transition-colors" />
+      <ArrowRight size={15} className="text-slate-300 dark:text-zinc-600 group-hover:text-slate-500 dark:group-hover:text-zinc-400 shrink-0 mt-0.5 transition-colors" />
     </Link>
   );
 }

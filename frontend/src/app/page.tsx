@@ -1,29 +1,36 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Users, Briefcase, MessageCircle, ArrowRight, Zap, Shield, Star } from 'lucide-react';
+import { Users, Briefcase, MessageCircle, ArrowRight, Zap, ShieldCheck, TrendingUp } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { createClient } from '@/lib/supabase/server';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Redirect already-logged-in users straight to the dashboard
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect('/dashboard');
+
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 transition-colors">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-zinc-950 transition-colors">
 
       {/* ─── Navbar ─────────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 transition-colors">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-indigo-600 tracking-tight">
-            Parchi<span className="text-gray-400 dark:text-gray-500 font-normal">.maju</span>
+            Parchi<span className="text-slate-300 dark:text-zinc-600 font-normal">.maju</span>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
               href="/login"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="text-sm font-medium text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white px-4 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors shadow-sm shadow-indigo-200 dark:shadow-indigo-950"
+              className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors shadow-sm"
             >
               Join free
             </Link>
@@ -32,187 +39,145 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden flex flex-col items-center justify-center text-center px-4 py-28 bg-dot-grid">
+      <section className="relative overflow-hidden flex flex-col items-center justify-center text-center px-4 py-28 md:py-36 bg-dot-grid">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/90 via-white/60 to-white dark:from-zinc-950/90 dark:via-zinc-950/60 dark:to-zinc-950 pointer-events-none" />
 
-        {/* Gradient base layer */}
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/80 via-white to-purple-50/40 dark:from-indigo-950/40 dark:via-gray-950 dark:to-purple-950/20 pointer-events-none" />
-
-        {/* Floating blur orbs */}
-        <div className="animate-float absolute -top-20 -left-20 w-72 h-72 bg-indigo-400/20 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="animate-float-delayed absolute top-10 -right-16 w-64 h-64 bg-purple-400/20 dark:bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="animate-float-slow absolute bottom-0 left-1/3 w-56 h-56 bg-violet-400/15 dark:bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Floating orbs */}
+        <div className="animate-float absolute -top-24 -left-24 w-80 h-80 bg-indigo-400/15 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="animate-float-delayed absolute -top-12 -right-20 w-72 h-72 bg-violet-400/15 dark:bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="animate-float-slow absolute bottom-0 left-1/2 w-64 h-64 bg-indigo-300/10 dark:bg-indigo-700/8 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl mx-auto">
           {/* Badge */}
-          <div className="animate-fade-in-up inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 border border-indigo-200 dark:border-indigo-800">
-            <Zap size={12} />
-            For MAJU students &amp; alumni — all departments
+          <div className="animate-fade-in-up inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 border bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
+            <Zap size={11} />
+            Students &amp; alumni of MAJU — all departments
           </div>
 
           {/* Headline */}
-          <h1 className="animate-fade-in-up delay-100 text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
-            Your <span className="text-gradient">parchi</span> should be
-            <br className="hidden sm:block" />
-            {' '}your skills, not your wasta.
+          <h1 className="animate-fade-in-up delay-100 text-5xl md:text-6xl font-extrabold leading-tight text-slate-900 dark:text-zinc-50 mb-6 tracking-tight">
+            Your <span className="text-gradient">parchi</span> should be<br className="hidden sm:block" />
+            {' '}your skills, not wasta.
           </h1>
 
-          {/* Sub-headline */}
-          <p className="animate-fade-in-up delay-200 text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
-            Connect with MAJU alumni who are actually working in your dream companies.
-            Get referred. Get mentored. Land the job you deserve.
+          <p className="animate-fade-in-up delay-200 text-lg text-slate-500 dark:text-zinc-400 max-w-lg mx-auto mb-10 leading-relaxed">
+            Connect with MAJU alumni at your dream companies.
+            Get referred, get mentored, and land the job you actually deserve.
           </p>
 
-          {/* CTA buttons */}
-          <div className="animate-fade-in-up delay-300 flex flex-col sm:flex-row gap-4 justify-center">
+          {/* CTAs */}
+          <div className="animate-fade-in-up delay-300 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-xl text-base transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-950 hover:shadow-xl hover:shadow-indigo-300 dark:hover:shadow-indigo-900 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-7 py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-950 hover:-translate-y-0.5 hover:shadow-xl"
             >
               Get started — it&apos;s free
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold px-8 py-4 rounded-xl text-base hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 font-semibold px-7 py-3.5 rounded-xl text-sm hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
             >
-              I have an account
+              I already have an account
             </Link>
           </div>
 
-          <p className="animate-fade-in-up delay-400 text-xs text-gray-400 dark:text-gray-500 mt-5">
-            Only <strong className="text-gray-500 dark:text-gray-400">@maju.edu.pk</strong> students &amp; verified alumni.&nbsp; No spam, ever.
+          <p className="animate-fade-in-up delay-400 text-xs text-slate-400 dark:text-zinc-500 mt-5">
+            Students use <strong className="text-slate-500 dark:text-zinc-400">@maju.edu.pk</strong>&nbsp;&nbsp;·&nbsp;&nbsp;
+            Alumni &amp; teachers use <strong className="text-slate-500 dark:text-zinc-400">@gmail.com</strong> or <strong className="text-slate-500 dark:text-zinc-400">@maju.edu.pk</strong>
           </p>
         </div>
       </section>
 
       {/* ─── Features ────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 bg-white dark:bg-gray-950 transition-colors">
+      <section className="py-24 px-4 bg-white dark:bg-zinc-950 transition-colors">
         <div className="max-w-5xl mx-auto">
-
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-3">How it works</p>
-            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
-              Three steps to your next job
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-zinc-50 mb-4 tracking-tight">
+              Three steps to your next role
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            <p className="text-slate-500 dark:text-zinc-400 max-w-md mx-auto text-sm leading-relaxed">
               No cold emails. No LinkedIn spam. Just your alumni network, finally organised.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-5">
             <FeatureCard
               step="01"
-              icon={<Users size={24} />}
-              gradient="from-indigo-500 to-indigo-700"
+              icon={<Users size={20} />}
+              color="indigo"
               title="Find your alumni"
-              description="Browse MAJU graduates by department, company, or batch year. See who's open to referrals right now."
+              description="Browse MAJU graduates by department, company, or batch. See who's open to referrals right now."
             />
             <FeatureCard
               step="02"
-              icon={<Briefcase size={24} />}
-              gradient="from-violet-500 to-purple-700"
+              icon={<Briefcase size={20} />}
+              color="violet"
               title="Request a referral"
-              description="Send a referral request with your resume and a note. Alumni review and mark it as referred when done."
+              description="Send a request with your details. Alumni review it and mark it referred once done."
             />
             <FeatureCard
               step="03"
-              icon={<MessageCircle size={24} />}
-              gradient="from-pink-500 to-rose-600"
+              icon={<MessageCircle size={20} />}
+              color="purple"
               title="Have the real talk"
-              description="Message seniors to ask what the industry actually expects, what to prep, and what to avoid."
+              description="Message seniors to ask what the industry actually expects, what to study, and what to avoid."
             />
           </div>
         </div>
       </section>
 
-      {/* ─── Stats ────────────────────────────────────────────────────────────── */}
-      <section className="py-20 px-4 bg-gray-50 dark:bg-gray-900 transition-colors">
+      {/* ─── Trust strip ─────────────────────────────────────────────────────── */}
+      <section className="py-16 px-4 bg-slate-50 dark:bg-zinc-900 border-y border-slate-100 dark:border-zinc-800 transition-colors">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <StatCard
-              icon={<Star size={20} />}
-              value="All Depts"
-              label="CS · BBA · Telecom · Cyber · AI"
-              color="indigo"
-            />
-            <StatCard
-              icon={<Shield size={20} />}
-              value="100% Free"
-              label="No paywalls, ever"
-              color="violet"
-            />
-            <StatCard
-              icon={<Users size={20} />}
-              value="MAJU Only"
-              label="Verified, trusted network"
-              color="purple"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <TrustCard icon={<ShieldCheck size={18} />} title="Verified network" desc="Only @maju.edu.pk students and verified alumni. No strangers." />
+            <TrustCard icon={<TrendingUp size={18} />} title="All departments" desc="CS, BBA, Telecom, Cyber Security, AI — every batch, every dept." />
+            <TrustCard icon={<Zap size={18} />} title="Always free" desc="No premium tier, no ads. Built by a student, for students." />
           </div>
         </div>
       </section>
 
       {/* ─── Community Logos ─────────────────────────────────────────────────── */}
-      <section className="py-16 px-4 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-10">
+      <section className="py-14 px-4 bg-white dark:bg-zinc-950 transition-colors">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-10">
             Part of the MAJU community
           </p>
           <div className="flex items-center justify-center gap-12 flex-wrap">
-            <Image
-              src="/logos/maju.png"
-              alt="Muhammad Ali Jinnah University"
-              width={80}
-              height={80}
-              className="opacity-50 dark:opacity-30 hover:opacity-90 dark:hover:opacity-70 transition-opacity duration-200 object-contain"
-            />
-            <Image
-              src="/logos/ieee.png"
-              alt="IEEE"
-              width={110}
-              height={55}
-              className="opacity-50 dark:opacity-30 hover:opacity-90 dark:hover:opacity-70 transition-opacity duration-200 object-contain"
-            />
-            <Image
-              src="/logos/acm.png"
-              alt="Association for Computing Machinery"
-              width={130}
-              height={55}
-              className="opacity-50 dark:opacity-30 hover:opacity-90 dark:hover:opacity-70 transition-opacity duration-200 object-contain"
-            />
+            <Image src="/logos/maju.png" alt="Muhammad Ali Jinnah University" width={72} height={72}
+              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
+            <Image src="/logos/ieee.png" alt="IEEE" width={100} height={50}
+              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
+            <Image src="/logos/acm.png" alt="ACM" width={120} height={50}
+              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
           </div>
         </div>
       </section>
 
       {/* ─── CTA ─────────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      <section className="py-20 px-4 bg-slate-50 dark:bg-zinc-900 transition-colors">
         <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-12 text-center text-white shadow-2xl shadow-indigo-200 dark:shadow-indigo-950">
-            {/* Decorative blobs */}
-            <div className="absolute -top-12 -left-12 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
-            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-purple-400/20 rounded-full blur-2xl" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-indigo-300/10 rounded-full blur-xl" />
-
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-12 text-center text-white shadow-2xl shadow-indigo-200 dark:shadow-indigo-950">
+            <div className="absolute -top-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-purple-300/20 rounded-full blur-2xl" />
             <div className="relative">
-              <p className="text-indigo-200 text-sm font-medium mb-2">Ready to get started?</p>
-              <h2 className="text-4xl font-extrabold mb-4">
+              <p className="text-indigo-200 text-xs font-medium uppercase tracking-widest mb-3">Ready to start?</p>
+              <h2 className="text-3xl md:text-4xl font-extrabold mb-4 tracking-tight">
                 Talent should win.<br />Let&apos;s make it happen.
               </h2>
-              <p className="text-indigo-200 mb-10 max-w-md mx-auto leading-relaxed">
+              <p className="text-indigo-200 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
                 Join the platform built by a MAJU student, for every MAJU student and alumni.
-                Your network is waiting.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-8 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-lg hover:-translate-y-0.5"
-                >
-                  Create your profile
-                  <ArrowRight size={18} />
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/signup"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-7 py-3.5 rounded-xl hover:bg-indigo-50 transition-all text-sm shadow-lg hover:-translate-y-0.5">
+                  Create your profile <ArrowRight size={16} />
                 </Link>
-                <Link
-                  href="/alumni"
-                  className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition-colors"
-                >
+                <Link href="/alumni"
+                  className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-sm">
                   Browse alumni first
                 </Link>
               </div>
@@ -222,56 +187,45 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="py-6 px-4 text-center text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800 transition-colors">
-        Built with ❤️ at MAJU &nbsp;·&nbsp; Free forever &nbsp;·&nbsp; Only for <strong className="text-gray-500 dark:text-gray-400">@maju.edu.pk</strong> &nbsp;·&nbsp; © Muhammad Suhaib
+      <footer className="py-6 px-4 text-center text-xs text-slate-400 dark:text-zinc-500 border-t border-slate-100 dark:border-zinc-800 transition-colors">
+        Built with care at MAJU &nbsp;·&nbsp; Free forever &nbsp;·&nbsp;{' '}
+        Only for <strong className="text-slate-500 dark:text-zinc-400">@maju.edu.pk</strong>{' '}
+        &nbsp;·&nbsp; © Muhammad Suhaib
       </footer>
     </div>
   );
 }
 
-/* ─── Feature Card ──────────────────────────────────────────────────────────── */
-function FeatureCard({
-  step, icon, gradient, title, description,
-}: {
-  step: string;
-  icon: React.ReactNode;
-  gradient: string;
-  title: string;
-  description: string;
+function FeatureCard({ step, icon, color, title, description }: {
+  step: string; icon: React.ReactNode; color: string; title: string; description: string;
 }) {
-  return (
-    <div className="group relative flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:shadow-xl hover:shadow-gray-100 dark:hover:shadow-gray-900/50 hover:-translate-y-1 transition-all duration-300">
-      {/* Step number */}
-      <span className="absolute top-5 right-5 text-xs font-bold text-gray-200 dark:text-gray-700">{step}</span>
-      {/* Icon */}
-      <div className={`w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md mb-5`}>
-        {icon}
-      </div>
-      <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">{title}</h3>
-      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-/* ─── Stat Card ─────────────────────────────────────────────────────────────── */
-function StatCard({
-  icon, value, label, color,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  color: 'indigo' | 'violet' | 'purple';
-}) {
-  const colors = {
+  const colors: Record<string, string> = {
     indigo: 'from-indigo-500 to-indigo-700 shadow-indigo-100 dark:shadow-none',
     violet: 'from-violet-500 to-violet-700 shadow-violet-100 dark:shadow-none',
     purple: 'from-purple-500 to-purple-700 shadow-purple-100 dark:shadow-none',
   };
   return (
-    <div className={`flex flex-col items-center text-center rounded-2xl bg-gradient-to-br ${colors[color]} text-white p-8 shadow-lg`}>
-      <div className="mb-3 opacity-80">{icon}</div>
-      <div className="text-3xl font-extrabold mb-1">{value}</div>
-      <div className="text-sm opacity-75">{label}</div>
+    <div className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-none hover:-translate-y-0.5 transition-all duration-300">
+      <span className="text-xs font-bold text-slate-200 dark:text-zinc-700 mb-4">{step}</span>
+      <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br ${colors[color]} text-white shadow-sm mb-4 shrink-0`}>
+        {icon}
+      </div>
+      <h3 className="font-semibold text-slate-900 dark:text-zinc-100 mb-2 text-base">{title}</h3>
+      <p className="text-slate-500 dark:text-zinc-400 text-sm leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+function TrustCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-4 bg-white dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-700 p-5">
+      <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="font-semibold text-slate-900 dark:text-zinc-100 text-sm mb-0.5">{title}</p>
+        <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">{desc}</p>
+      </div>
     </div>
   );
 }
