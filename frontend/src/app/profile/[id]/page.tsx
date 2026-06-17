@@ -59,22 +59,21 @@ export default function ProfilePage() {
     setSaving(true);
     setError('');
 
+    // ── Step 1: save the core fields that always exist ──────────────────────
     const { data, error } = await supabase
       .from('profiles')
       .update({
-        full_name: form.full_name,
-        bio: form.bio,
-        department: form.department,
-        batch_year: form.batch_year,
-        linkedin_url: form.linkedin_url,
-        github_url: form.github_url,
-        portfolio_url: form.portfolio_url,
-        current_company: form.current_company,
-        job_title: form.job_title,
-        is_open_to_referrals: form.is_open_to_referrals,
-        skills: form.skills,
-        graduation_year: form.graduation_year,
-        updated_at: new Date().toISOString(),
+        full_name:           form.full_name,
+        bio:                 form.bio,
+        department:          form.department,
+        batch_year:          form.batch_year,
+        linkedin_url:        form.linkedin_url,
+        current_company:     form.current_company,
+        job_title:           form.job_title,
+        is_open_to_referrals:form.is_open_to_referrals,
+        skills:              form.skills,
+        graduation_year:     form.graduation_year,
+        updated_at:          new Date().toISOString(),
       })
       .eq('id', profile.id)
       .select()
@@ -83,6 +82,33 @@ export default function ProfilePage() {
     setSaving(false);
 
     if (error) { setError(error.message); return; }
+
+    // ── Step 2: try to save new columns (require migration to be run first) ─
+    const needsNewFields =
+      form.github_url    !== profile.github_url ||
+      form.portfolio_url !== profile.portfolio_url;
+
+    if (needsNewFields) {
+      const { error: extErr } = await supabase
+        .from('profiles')
+        .update({ github_url: form.github_url ?? null, portfolio_url: form.portfolio_url ?? null })
+        .eq('id', profile.id);
+
+      if (extErr) {
+        // Columns don't exist yet — migration hasn't been run
+        setError(
+          '⚠️ GitHub & Portfolio links need a one-time database migration. ' +
+          'Open your Supabase dashboard → SQL Editor and run the file: ' +
+          'frontend/supabase_migration.sql — then save again.'
+        );
+        // Still commit the other changes to state
+        setProfile(data as Profile);
+        setForm(data as Profile);
+        setIsEditing(false);
+        return;
+      }
+    }
+
     setProfile(data as Profile);
     setForm(data as Profile);
     setIsEditing(false);

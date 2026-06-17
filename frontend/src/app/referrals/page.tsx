@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { referralsApi } from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile, ReferralRequest, ReferralStatus } from '@/types';
 import { Clock, CheckCircle, XCircle, Star, ExternalLink, Loader2, Inbox } from 'lucide-react';
@@ -11,10 +10,10 @@ import { AppNav } from '@/components/AppNav';
 import { Badge } from '@/components/ui/badge';
 
 const STATUS_META: Record<ReferralStatus, { label: string; variant: 'warning' | 'default' | 'destructive' | 'success'; icon: React.ReactNode }> = {
-  pending:  { label: 'Pending',      variant: 'warning',     icon: <Clock size={11} /> },
-  accepted: { label: 'Accepted',     variant: 'default',     icon: <CheckCircle size={11} /> },
-  declined: { label: 'Declined',     variant: 'destructive', icon: <XCircle size={11} /> },
-  referred: { label: 'Referred',     variant: 'success',     icon: <Star size={11} /> },
+  pending:  { label: 'Pending',  variant: 'warning',     icon: <Clock size={11} /> },
+  accepted: { label: 'Accepted', variant: 'default',     icon: <CheckCircle size={11} /> },
+  declined: { label: 'Declined', variant: 'destructive', icon: <XCircle size={11} /> },
+  referred: { label: 'Referred', variant: 'success',     icon: <Star size={11} /> },
 };
 
 export default function ReferralsPage() {
@@ -22,40 +21,85 @@ export default function ReferralsPage() {
   const supabase = createClient();
 
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [requests, setRequests] = useState<ReferralRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ReferralStatus | 'all'>('all');
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [requests, setRequests]       = useState<ReferralRequest[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [activeTab, setActiveTab]     = useState<ReferralStatus | 'all'>('all');
+  const [updatingId, setUpdatingId]   = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
 
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (!p) { router.push('/onboarding'); return; }
+      const { data: p, error: pErr } = await supabase
+        .from('profiles').select('*').eq('id', user.id).single();
+      if (pErr || !p) { router.push('/onboarding'); return; }
       setCurrentUser(p as Profile);
 
-      const data = p.role === 'alumni'
-        ? await referralsApi.getInbox()
-        : await referralsApi.getMine();
-      setRequests(data);
+      let query;
+      if (p.role === 'alumni' || p.role === 'teacher') {
+        // Inbox: requests sent to this alumni/teacher
+        query = supabase
+          .from('referral_requests')
+          .select(`
+            *,
+            requester:profiles!requester_id (
+              id, full_name, department, batch_year,
+              profile_picture_url, linkedin_url, skills
+            )
+          `)
+          .eq('alumni_id', user.id)
+          .order('created_at', { ascending: false });
+      } else {
+        // Student: their own sent requests
+        query = supabase
+          .from('referral_requests')
+          .select(`
+            *,
+            alumni:profiles!alumni_id (
+              id, full_name, job_title, current_company,
+              profile_picture_url
+            )
+          `)
+          .eq('requester_id', user.id)
+          .order('created_at', { ascending: false });
+      }
+
+      const { data, error: qErr } = await query;
+      if (qErr) { setError(qErr.message); }
+      else { setRequests((data ?? []) as unknown as ReferralRequest[]); }
       setLoading(false);
     })();
   }, [supabase, router]);
 
-  const handleStatusUpdate = async (id: string, status: ReferralStatus, notes?: string) => {
+  const handleStatusUpdate = async (
+    id: string,
+    status: ReferralStatus,
+    notes?: string,
+  ) => {
     setUpdatingId(id);
-    try {
-      const updated = await referralsApi.updateStatus(id, status, notes);
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, ...updated } : r));
-    } finally {
-      setUpdatingId(null);
-    }
+    const { data, error: uErr } = await supabase
+      .from('referral_requests')
+      .update({
+        status,
+        ...(notes !== undefined ? { alumni_notes: notes } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    setUpdatingId(null);
+    if (uErr) { setError(uErr.message); return; }
+    setRequests((prev) => prev.map((r) => r.id === id ? { ...r, ...data } : r));
   };
 
-  const filtered = activeTab === 'all' ? requests : requests.filter((r) => r.status === activeTab);
-  const isAlumni = currentUser?.role === 'alumni';
+  const filtered = activeTab === 'all'
+    ? requests
+    : requests.filter((r) => r.status === activeTab);
+
+  const isAlumni = currentUser?.role === 'alumni' || currentUser?.role === 'teacher';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors">
@@ -66,10 +110,19 @@ export default function ReferralsPage() {
           {isAlumni ? 'Referral Inbox' : 'My Referral Requests'}
         </h1>
 
-        {/* Tabs */}
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl border border-red-100 dark:border-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Status tabs */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {(['all', 'pending', 'accepted', 'referred', 'declined'] as const).map((tab) => {
-            const count = tab === 'all' ? requests.length : requests.filter(r => r.status === tab).length;
+            const count = tab === 'all'
+              ? requests.length
+              : requests.filter((r) => r.status === tab).length;
             return (
               <button
                 key={tab}
@@ -95,7 +148,10 @@ export default function ReferralsPage() {
             <Inbox size={36} className="mx-auto mb-3 text-slate-300 dark:text-zinc-600" />
             <p className="font-medium text-slate-600 dark:text-zinc-300">Nothing here yet</p>
             {!isAlumni && (
-              <Link href="/alumni" className="mt-3 inline-block text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline">
+              <Link
+                href="/alumni"
+                className="mt-3 inline-block text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline"
+              >
                 Browse alumni and send your first request →
               </Link>
             )}
@@ -118,47 +174,62 @@ export default function ReferralsPage() {
   );
 }
 
-function ReferralCard({ request, isAlumni, updatingId, onUpdateStatus }: {
-  request: ReferralRequest; isAlumni: boolean;
+// ── Card component ─────────────────────────────────────────────────────────────
+
+function ReferralCard({
+  request, isAlumni, updatingId, onUpdateStatus,
+}: {
+  request: ReferralRequest;
+  isAlumni: boolean;
   updatingId: string | null;
   onUpdateStatus: (id: string, status: ReferralStatus, notes?: string) => void;
 }) {
   const [showNotes, setShowNotes] = useState(false);
-  const [notes, setNotes] = useState('');
-  const meta = STATUS_META[request.status];
+  const [notes, setNotes]         = useState('');
+  const meta   = STATUS_META[request.status];
   const person = isAlumni ? request.requester : request.alumni;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
+
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm shrink-0">
-            {person?.full_name?.[0]?.toUpperCase()}
+            {person?.full_name?.[0]?.toUpperCase() ?? '?'}
           </div>
           <div>
-            <Link href={`/profile/${person?.id}`} className="font-semibold text-slate-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm transition-colors">
-              {person?.full_name}
+            <Link
+              href={`/profile/${person?.id}`}
+              className="font-semibold text-slate-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm transition-colors"
+            >
+              {person?.full_name ?? '—'}
             </Link>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
               {isAlumni
-                ? `${request.requester?.department} · Batch ${request.requester?.batch_year}`
-                : `${request.alumni?.job_title} @ ${request.alumni?.current_company}`}
+                ? `${request.requester?.department ?? ''} · Batch ${request.requester?.batch_year ?? ''}`
+                : `${request.alumni?.job_title ?? ''} @ ${request.alumni?.current_company ?? ''}`}
             </p>
           </div>
         </div>
-        <Badge variant={meta.variant} className="shrink-0">
+        <Badge variant={meta.variant} className="shrink-0 gap-1">
           {meta.icon}{meta.label}
         </Badge>
       </div>
 
+      {/* Job info */}
       <div className="bg-slate-50 dark:bg-zinc-800/60 rounded-xl p-4 mb-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{request.role}</span>
           <span className="text-slate-400 text-xs">at</span>
           <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">{request.company}</span>
           {request.job_url && (
-            <a href={request.job_url} target="_blank" rel="noopener noreferrer"
-              className="ml-auto text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+            <a
+              href={request.job_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
               <ExternalLink size={13} />
             </a>
           )}
@@ -166,22 +237,28 @@ function ReferralCard({ request, isAlumni, updatingId, onUpdateStatus }: {
         <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">{request.message}</p>
       </div>
 
+      {/* Alumni note */}
       {request.alumni_notes && (
         <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl p-3 mb-4 text-sm text-blue-700 dark:text-blue-300">
-          <strong>Alumni note:</strong> {request.alumni_notes}
+          <strong>Note:</strong> {request.alumni_notes}
         </div>
       )}
 
-      {isAlumni && request.requester?.skills && request.requester.skills.length > 0 && (
+      {/* Skills (alumni view) */}
+      {isAlumni && (request.requester?.skills?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {request.requester.skills.map((s) => (
-            <span key={s} className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800">
+          {request.requester!.skills!.map((s) => (
+            <span
+              key={s}
+              className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800"
+            >
               {s}
             </span>
           ))}
         </div>
       )}
 
+      {/* Alumni actions — pending */}
       {isAlumni && request.status === 'pending' && (
         <div className="space-y-3">
           {showNotes && (
@@ -189,22 +266,27 @@ function ReferralCard({ request, isAlumni, updatingId, onUpdateStatus }: {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional note for the requester (e.g. timeline, next steps)…"
-              className="w-full px-3 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="w-full px-3 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500"
               rows={3}
             />
           )}
           <div className="flex gap-2">
             <button
-              onClick={() => { if (!showNotes) setShowNotes(true); else onUpdateStatus(request.id, 'accepted', notes || undefined); }}
+              onClick={() => {
+                if (!showNotes) setShowNotes(true);
+                else onUpdateStatus(request.id, 'accepted', notes || undefined);
+              }}
               disabled={updatingId === request.id}
-              className="flex-1 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-xl transition-colors"
+              className="flex-1 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 py-2 rounded-xl transition-colors"
             >
-              {updatingId === request.id ? <Loader2 size={15} className="animate-spin mx-auto" /> : showNotes ? 'Confirm accept' : 'Accept'}
+              {updatingId === request.id
+                ? <Loader2 size={15} className="animate-spin mx-auto" />
+                : showNotes ? 'Confirm accept' : 'Accept'}
             </button>
             <button
               onClick={() => onUpdateStatus(request.id, 'referred', notes || undefined)}
               disabled={updatingId === request.id}
-              className="flex-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 py-2 rounded-xl transition-colors"
+              className="flex-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 py-2 rounded-xl transition-colors"
             >
               Mark referred
             </button>
@@ -219,18 +301,23 @@ function ReferralCard({ request, isAlumni, updatingId, onUpdateStatus }: {
         </div>
       )}
 
+      {/* Alumni actions — accepted → referred */}
       {isAlumni && request.status === 'accepted' && (
         <button
           onClick={() => onUpdateStatus(request.id, 'referred')}
           disabled={updatingId === request.id}
           className="w-full text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 py-2 rounded-xl transition-colors"
         >
-          Mark as referred
+          {updatingId === request.id
+            ? <Loader2 size={15} className="animate-spin mx-auto" />
+            : 'Mark as referred'}
         </button>
       )}
 
       <p className="text-xs text-slate-400 dark:text-zinc-500 mt-4">
-        {new Date(request.created_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
+        {new Date(request.created_at).toLocaleDateString('en-PK', {
+          day: 'numeric', month: 'short', year: 'numeric',
+        })}
       </p>
     </div>
   );
