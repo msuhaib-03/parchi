@@ -6,10 +6,13 @@ export type JobType = 'full-time' | 'part-time' | 'internship' | 'contract' | 'r
 export type JobAppStatus = 'applied' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
 export type NotificationType =
   | 'referral_received'
+  | 'referral_accepted'
+  | 'referral_rejected'
   | 'referral_updated'
   | 'message_received'
   | 'job_posted'
-  | 'application_update';
+  | 'application_update'
+  | 'story_posted';
 export type PostType = 'blog' | 'paper' | 'announcement';
 
 export interface Profile {

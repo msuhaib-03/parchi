@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu, X, LayoutDashboard, Users, Briefcase,
   MessageCircle, User, LogOut, Loader2, Building2,
-  Bell, BriefcaseBusiness, Trophy,
+  Bell, BriefcaseBusiness, Trophy, CheckCircle2, XCircle,
 } from 'lucide-react';
+import type { NotificationType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,32 @@ interface AppNavProps {
   userName?: string;
   userId?: string;
   unreadCount?: number;      // messages unread
+}
+
+// ── Notification type → icon + colour ────────────────────────────────────────
+function getNotifMeta(type: string): {
+  Icon: React.ElementType;
+  bg: string;
+  fg: string;
+} {
+  switch (type as NotificationType) {
+    case 'job_posted':
+      return { Icon: Building2,       bg: 'bg-indigo-100 dark:bg-indigo-900/40', fg: 'text-indigo-600 dark:text-indigo-400' };
+    case 'referral_received':
+      return { Icon: BriefcaseBusiness, bg: 'bg-violet-100 dark:bg-violet-900/40', fg: 'text-violet-600 dark:text-violet-400' };
+    case 'referral_accepted':
+      return { Icon: CheckCircle2,    bg: 'bg-emerald-100 dark:bg-emerald-900/40', fg: 'text-emerald-600 dark:text-emerald-400' };
+    case 'referral_rejected':
+      return { Icon: XCircle,         bg: 'bg-red-100 dark:bg-red-900/40',    fg: 'text-red-500 dark:text-red-400' };
+    case 'application_update':
+      return { Icon: Briefcase,       bg: 'bg-blue-100 dark:bg-blue-900/40',  fg: 'text-blue-600 dark:text-blue-400' };
+    case 'story_posted':
+      return { Icon: Trophy,          bg: 'bg-amber-100 dark:bg-amber-900/40', fg: 'text-amber-500 dark:text-amber-400' };
+    case 'message_received':
+      return { Icon: MessageCircle,   bg: 'bg-teal-100 dark:bg-teal-900/40',  fg: 'text-teal-600 dark:text-teal-400' };
+    default:
+      return { Icon: Bell,            bg: 'bg-slate-100 dark:bg-zinc-800',    fg: 'text-slate-500 dark:text-zinc-400' };
+  }
 }
 
 const NAV_LINKS = (userId?: string) => [
@@ -225,34 +252,49 @@ export function AppNav({ userName, userId, unreadCount = 0 }: AppNavProps) {
                           <Bell size={24} className="mx-auto text-slate-200 dark:text-zinc-700 mb-2" />
                           <p className="text-sm text-slate-400 dark:text-zinc-500">No notifications yet</p>
                         </div>
-                      ) : notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className={cn(
-                            'px-4 py-3 transition-colors',
-                            !notif.is_read
-                              ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
-                              : 'hover:bg-slate-50 dark:hover:bg-zinc-800/50'
-                          )}
-                        >
-                          {notif.link ? (
-                            <Link href={notif.link} onClick={() => setNotifOpen(false)} className="block">
-                              <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{notif.title}</p>
-                              {notif.body && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 line-clamp-2">{notif.body}</p>}
-                              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{formatNotifTime(notif.created_at)}</p>
-                            </Link>
-                          ) : (
-                            <>
-                              <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{notif.title}</p>
-                              {notif.body && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 line-clamp-2">{notif.body}</p>}
-                              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{formatNotifTime(notif.created_at)}</p>
-                            </>
-                          )}
-                          {!notif.is_read && (
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1" />
-                          )}
-                        </div>
-                      ))}
+                      ) : notifications.map((notif) => {
+                        const { Icon, bg, fg } = getNotifMeta(notif.type);
+                        const inner = (
+                          <div className="flex items-start gap-3 w-full">
+                            {/* type icon */}
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${bg}`}>
+                              <Icon size={14} className={fg} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-slate-900 dark:text-zinc-100 leading-snug line-clamp-2">
+                                {notif.title}
+                              </p>
+                              {notif.body && (
+                                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-relaxed line-clamp-2">
+                                  {notif.body}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 flex items-center gap-1.5">
+                                {formatNotifTime(notif.created_at)}
+                                {!notif.is_read && (
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                        return (
+                          <div
+                            key={notif.id}
+                            className={cn(
+                              'px-3 py-3 transition-colors',
+                              !notif.is_read
+                                ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                                : 'hover:bg-slate-50 dark:hover:bg-zinc-800/50'
+                            )}
+                          >
+                            {notif.link
+                              ? <Link href={notif.link} onClick={() => setNotifOpen(false)} className="block">{inner}</Link>
+                              : inner
+                            }
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
