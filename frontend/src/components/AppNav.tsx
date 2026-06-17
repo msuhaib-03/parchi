@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu, X, LayoutDashboard, Users, Briefcase,
   MessageCircle, User, LogOut, Loader2, Building2,
-  Bell, BriefcaseBusiness,
+  Bell, BriefcaseBusiness, Trophy,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
@@ -24,6 +24,7 @@ const NAV_LINKS = (userId?: string) => [
   { href: '/alumni',      label: 'Browse Alumni', icon: Users },
   { href: '/referrals',   label: 'Referrals',    icon: BriefcaseBusiness },
   { href: '/jobs',        label: 'Jobs',         icon: Building2 },
+  { href: '/stories',     label: 'Stories',      icon: Trophy },
   { href: '/messages',    label: 'Messages',     icon: MessageCircle, badgeKey: 'unread' as const },
   ...(userId ? [{ href: `/profile/${userId}`, label: 'Profile', icon: User }] : []),
 ];

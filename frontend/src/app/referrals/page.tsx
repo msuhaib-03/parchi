@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile, ReferralRequest, ReferralStatus } from '@/types';
-import { Clock, CheckCircle, XCircle, Star, ExternalLink, Loader2, Inbox } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Star, ExternalLink, Loader2, Inbox, Trophy } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
 import { Badge } from '@/components/ui/badge';
+import { SuccessStoryModal } from '@/components/SuccessStoryModal';
 
 const STATUS_META: Record<ReferralStatus, { label: string; variant: 'warning' | 'default' | 'destructive' | 'success'; icon: React.ReactNode }> = {
   pending:  { label: 'Pending',  variant: 'warning',     icon: <Clock size={11} /> },
@@ -20,12 +21,17 @@ export default function ReferralsPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [requests, setRequests]       = useState<ReferralRequest[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
-  const [activeTab, setActiveTab]     = useState<ReferralStatus | 'all'>('all');
-  const [updatingId, setUpdatingId]   = useState<string | null>(null);
+  const [currentUser, setCurrentUser]   = useState<Profile | null>(null);
+  const [requests, setRequests]         = useState<ReferralRequest[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState('');
+  const [activeTab, setActiveTab]       = useState<ReferralStatus | 'all'>('all');
+  const [updatingId, setUpdatingId]     = useState<string | null>(null);
+  const [storyPrefill, setStoryPrefill] = useState<{
+    referralId?: string; referredById?: string; referredByName?: string;
+    company: string; role: string;
+  } | null>(null);
+  const [sharedStoryIds, setSharedStoryIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -36,6 +42,14 @@ export default function ReferralsPage() {
         .from('profiles').select('*').eq('id', user.id).single();
       if (pErr || !p) { router.push('/onboarding'); return; }
       setCurrentUser(p as Profile);
+
+      // Check which referred requests already have a story shared
+      const { data: myStories } = await supabase
+        .from('success_stories')
+        .select('referral_id')
+        .eq('user_id', user.id)
+        .not('referral_id', 'is', null);
+      setSharedStoryIds(new Set((myStories ?? []).map((s) => s.referral_id as string)));
 
       let query;
       if (p.role === 'alumni' || p.role === 'teacher') {
@@ -139,6 +153,16 @@ export default function ReferralsPage() {
           })}
         </div>
 
+        {/* ── Share story modal ──────────────────────────────────── */}
+        {currentUser && storyPrefill && (
+          <SuccessStoryModal
+            open={!!storyPrefill}
+            onClose={() => setStoryPrefill(null)}
+            currentUser={currentUser}
+            prefill={storyPrefill}
+          />
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 size={28} className="animate-spin text-indigo-400" />
@@ -165,6 +189,14 @@ export default function ReferralsPage() {
                 isAlumni={!!isAlumni}
                 updatingId={updatingId}
                 onUpdateStatus={handleStatusUpdate}
+                alreadyShared={sharedStoryIds.has(req.id)}
+                onShareStory={() => setStoryPrefill({
+                  referralId:     req.id,
+                  referredById:   req.alumni_id,
+                  referredByName: req.alumni?.full_name,
+                  company:        req.company,
+                  role:           req.role,
+                })}
               />
             ))}
           </div>
@@ -177,12 +209,14 @@ export default function ReferralsPage() {
 // ── Card component ─────────────────────────────────────────────────────────────
 
 function ReferralCard({
-  request, isAlumni, updatingId, onUpdateStatus,
+  request, isAlumni, updatingId, onUpdateStatus, alreadyShared, onShareStory,
 }: {
   request: ReferralRequest;
   isAlumni: boolean;
   updatingId: string | null;
   onUpdateStatus: (id: string, status: ReferralStatus, notes?: string) => void;
+  alreadyShared?: boolean;
+  onShareStory?: () => void;
 }) {
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes]         = useState('');
@@ -312,6 +346,39 @@ function ReferralCard({
             ? <Loader2 size={15} className="animate-spin mx-auto" />
             : 'Mark as referred'}
         </button>
+      )}
+
+      {/* ── Share success story prompt (student, referred status) ─── */}
+      {!isAlumni && request.status === 'referred' && onShareStory && (
+        <div className={`mt-4 rounded-xl p-4 border transition-colors ${
+          alreadyShared
+            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900'
+            : 'bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border-indigo-100 dark:border-indigo-900'
+        }`}>
+          {alreadyShared ? (
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+              <Trophy size={15} />
+              Story shared! Inspiring future MAJUites.
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">
+                  🎉 You got referred!
+                </p>
+                <p className="text-xs text-indigo-600/70 dark:text-indigo-400/60 mt-0.5">
+                  Share your success story and inspire juniors.
+                </p>
+              </div>
+              <button
+                onClick={onShareStory}
+                className="shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              >
+                <Trophy size={12} /> Share story
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       <p className="text-xs text-slate-400 dark:text-zinc-500 mt-4">

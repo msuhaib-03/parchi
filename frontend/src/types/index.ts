@@ -132,6 +132,26 @@ export interface Notification {
   created_at: string;
 }
 
+// ─── Success Stories ──────────────────────────────────────────────────────────
+
+export interface SuccessStory {
+  id: string;
+  user_id: string;
+  referral_id?: string | null;
+  referred_by_id?: string | null;
+  company: string;
+  role: string;
+  department?: string | null;
+  batch_year?: number | null;
+  message?: string | null;
+  is_anonymous: boolean;
+  created_at: string;
+
+  // Joined
+  user?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year' | 'profile_picture_url'>;
+  referred_by?: Pick<Profile, 'id' | 'full_name' | 'job_title' | 'current_company'>;
+}
+
 // ─── Blog / Knowledge ─────────────────────────────────────────────────────────
 
 export interface Post {
