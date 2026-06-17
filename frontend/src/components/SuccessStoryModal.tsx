@@ -120,11 +120,11 @@ export function SuccessStoryModal({ open, onClose, currentUser, prefill }: Props
       {/* Panel */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="pointer-events-auto w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden animate-fade-in-up"
+          className="pointer-events-auto w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
+          {/* Header — always visible, never scrolls */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800 shrink-0">
             <div className="flex items-center gap-2">
               {step === 'card' && (
                 <button
@@ -149,7 +149,7 @@ export function SuccessStoryModal({ open, onClose, currentUser, prefill }: Props
 
           {/* ── Step 1: Form ─────────────────────────────────────────────── */}
           {step === 'form' && (
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
                 Inspire juniors by sharing your placement. Your card will be visible on the
                 Parchi Wall of Fame and shareable on LinkedIn &amp; WhatsApp.
@@ -259,7 +259,7 @@ export function SuccessStoryModal({ open, onClose, currentUser, prefill }: Props
 
           {/* ── Step 2: Shareable Card ───────────────────────────────────── */}
           {step === 'card' && (
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               {/* Card preview (matches OG image) */}
               <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] p-8 text-center text-white relative">
                 {/* Decorative orbs */}
