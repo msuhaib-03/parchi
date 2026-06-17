@@ -1,8 +1,16 @@
 // ─── Core domain types matching the Supabase schema ───────────────────────────
 
 export type UserRole = 'student' | 'alumni' | 'teacher';
-
 export type ReferralStatus = 'pending' | 'accepted' | 'declined' | 'referred';
+export type JobType = 'full-time' | 'part-time' | 'internship' | 'contract' | 'remote';
+export type JobAppStatus = 'applied' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
+export type NotificationType =
+  | 'referral_received'
+  | 'referral_updated'
+  | 'message_received'
+  | 'job_posted'
+  | 'application_update';
+export type PostType = 'blog' | 'paper' | 'announcement';
 
 export interface Profile {
   id: string;
@@ -12,10 +20,15 @@ export interface Profile {
   department: string;
   batch_year: number;
 
+  // Identity verification
+  student_id?: string | null;          // e.g. FA22-BSCS-0114
+
   // Alumni fields
   current_company?: string | null;
   job_title?: string | null;
   linkedin_url?: string | null;
+  github_url?: string | null;
+  portfolio_url?: string | null;
   is_open_to_referrals?: boolean;
 
   // Student fields
@@ -44,7 +57,6 @@ export interface ReferralRequest {
   created_at: string;
   updated_at: string;
 
-  // Joined fields (from API)
   alumni?: Pick<Profile, 'id' | 'full_name' | 'current_company' | 'job_title' | 'profile_picture_url'>;
   requester?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year' | 'profile_picture_url' | 'linkedin_url' | 'skills'>;
 }
@@ -68,7 +80,102 @@ export interface Conversation {
   unread_count: number;
 }
 
+// ─── Jobs ──────────────────────────────────────────────────────────────────────
+
+export interface Job {
+  id: string;
+  posted_by: string;
+  title: string;
+  company: string;
+  description: string;
+  requirements?: string | null;
+  job_type: JobType;
+  location?: string | null;
+  is_remote: boolean;
+  apply_url?: string | null;
+  apply_email?: string | null;
+  tags?: string[] | null;
+  deadline?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+
+  // Joined
+  poster?: Pick<Profile, 'id' | 'full_name' | 'job_title' | 'current_company' | 'role'>;
+  application_count?: number;
+  my_application?: JobApplication | null;
+}
+
+export interface JobApplication {
+  id: string;
+  job_id: string;
+  applicant_id: string;
+  cover_letter?: string | null;
+  status: JobAppStatus;
+  created_at: string;
+
+  // Joined
+  applicant?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year' | 'skills' | 'linkedin_url' | 'github_url'>;
+  job?: Pick<Job, 'id' | 'title' | 'company'>;
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+// ─── Blog / Knowledge ─────────────────────────────────────────────────────────
+
+export interface Post {
+  id: string;
+  author_id: string;
+  title: string;
+  slug: string;
+  body: string;
+  excerpt?: string | null;
+  tags?: string[] | null;
+  post_type: PostType;
+  cover_image_url?: string | null;
+  is_published: boolean;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  author?: Pick<Profile, 'id' | 'full_name' | 'role' | 'department'>;
+}
+
 // ─── Form types ───────────────────────────────────────────────────────────────
+
+export interface ReferralFormData {
+  company: string;
+  role: string;
+  job_url?: string;
+  message: string;
+  resume_url?: string;
+}
+
+export interface ProfileFormData {
+  full_name?: string;
+  bio?: string;
+  department?: string;
+  batch_year?: number;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
+  current_company?: string;
+  job_title?: string;
+  is_open_to_referrals?: boolean;
+  skills?: string[];
+  graduation_year?: number;
+}
 
 export interface SignupFormData {
   email: string;
@@ -77,29 +184,49 @@ export interface SignupFormData {
   role: UserRole;
   department: string;
   batch_year: number;
+  student_id?: string;
 }
 
-export interface ProfileFormData {
-  full_name: string;
-  department: string;
-  batch_year: number;
-  bio?: string;
-  // Alumni
-  current_company?: string;
-  job_title?: string;
-  linkedin_url?: string;
-  is_open_to_referrals?: boolean;
-  // Student
-  graduation_year?: number;
-  skills?: string[];
-}
-
-export interface ReferralFormData {
+export interface JobFormData {
+  title: string;
   company: string;
-  role: string;
-  job_url?: string;
-  message: string;
-  resume_url?: string;
+  description: string;
+  requirements?: string;
+  job_type: JobType;
+  location?: string;
+  is_remote: boolean;
+  apply_url?: string;
+  apply_email?: string;
+  tags?: string[];
+  deadline?: string;
+}
+
+// ─── MAJU ID validation ───────────────────────────────────────────────────────
+
+const DEPT_CODES = [
+  'BSCS', 'BSSE', 'BBA', 'BSIT', 'BSCE', 'BSEE', 'BSAI', 'BSCYS',
+  'BS', 'MS', 'MBA', 'PHD', 'MCS', 'MIT', 'MCM',
+  'BSBA', 'BSAF', 'BSPS', 'BSBI',
+].join('|');
+
+const MAJU_ID_REGEX = new RegExp(
+  `^(FA|SP)\\d{2}-(${DEPT_CODES})[A-Z]*-\\d{3,4}$`,
+  'i'
+);
+
+/** Validate MAJU student/alumni ID format loosely, e.g. FA22-BSCS-0114 */
+export function validateMajuId(id: string): boolean {
+  return MAJU_ID_REGEX.test(id.trim());
+}
+
+/** Extract student ID from MAJU university email (fa22bscs0114@maju.edu.pk) */
+export function extractIdFromEmail(email: string): string | null {
+  const local = email.split('@')[0]?.toUpperCase();
+  if (!local) return null;
+  // Try to reconstruct: FA22BSCS0114 → FA22-BSCS-0114
+  const match = local.match(/^(FA|SP)(\d{2})([A-Z]+)(\d{3,4})$/);
+  if (!match) return null;
+  return `${match[1]}${match[2]}-${match[3]}-${match[4]}`;
 }
 
 // ─── API response helpers ─────────────────────────────────────────────────────
@@ -128,3 +255,19 @@ export const DEPARTMENTS = [
 ] as const;
 
 export type Department = typeof DEPARTMENTS[number];
+
+export const JOB_TYPE_LABELS: Record<JobType, string> = {
+  'full-time':  'Full-time',
+  'part-time':  'Part-time',
+  'internship': 'Internship',
+  'contract':   'Contract',
+  'remote':     'Remote',
+};
+
+export const JOB_TYPE_COLORS: Record<JobType, string> = {
+  'full-time':  'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+  'part-time':  'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+  'internship': 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800',
+  'contract':   'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+  'remote':     'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
+};

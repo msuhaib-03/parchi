@@ -9,7 +9,8 @@ import { DEPARTMENTS } from '@/types';
 import {
   Edit2, Save, X, Briefcase, Link2,
   GraduationCap, Building2, CheckCircle, Plus,
-  ExternalLink, MessageCircle, Send, Loader2
+  ExternalLink, MessageCircle, Send, Loader2,
+  GitBranch, Globe, BadgeCheck,
 } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
 
@@ -66,6 +67,8 @@ export default function ProfilePage() {
         department: form.department,
         batch_year: form.batch_year,
         linkedin_url: form.linkedin_url,
+        github_url: form.github_url,
+        portfolio_url: form.portfolio_url,
         current_company: form.current_company,
         job_title: form.job_title,
         is_open_to_referrals: form.is_open_to_referrals,
@@ -268,15 +271,30 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ─── LinkedIn + Actions ───────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 flex flex-wrap gap-3 items-center transition-colors">
+        {/* ─── Links + Actions ─────────────────────────────────────────────────── */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
           {isEditing ? (
-            <div className="relative flex-1 min-w-[200px]">
-              <Link2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input value={form.linkedin_url ?? ''} onChange={(e) => setForm((f) => ({ ...f, linkedin_url: e.target.value }))} placeholder="https://linkedin.com/in/yourname" className={`${inputCls} pl-9`} />
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">Links</h2>
+              {/* LinkedIn */}
+              <div className="relative">
+                <Link2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                <input value={form.linkedin_url ?? ''} onChange={(e) => setForm((f) => ({ ...f, linkedin_url: e.target.value }))} placeholder="https://linkedin.com/in/yourname" className={`${inputCls} pl-9`} />
+              </div>
+              {/* GitHub */}
+              <div className="relative">
+                <GitBranch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                <input value={form.github_url ?? ''} onChange={(e) => setForm((f) => ({ ...f, github_url: e.target.value }))} placeholder="https://github.com/yourusername" className={`${inputCls} pl-9`} />
+              </div>
+              {/* Portfolio */}
+              <div className="relative">
+                <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                <input value={form.portfolio_url ?? ''} onChange={(e) => setForm((f) => ({ ...f, portfolio_url: e.target.value }))} placeholder="https://yourportfolio.com" className={`${inputCls} pl-9`} />
+              </div>
             </div>
           ) : (
-            <>
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* LinkedIn */}
               {profile.linkedin_url ? (
                 <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors">
@@ -288,6 +306,37 @@ export default function ProfilePage() {
                   <Plus size={14} /> Add LinkedIn
                 </button>
               ) : null}
+              {/* GitHub */}
+              {profile.github_url ? (
+                <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 transition-colors">
+                  <GitBranch size={14} /> GitHub
+                </a>
+              ) : isOwn ? (
+                <button onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-2 text-sm text-slate-400 dark:text-zinc-500 border border-dashed border-slate-200 dark:border-zinc-700 px-4 py-2 rounded-xl hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
+                  <Plus size={14} /> Add GitHub
+                </button>
+              ) : null}
+              {/* Portfolio */}
+              {profile.portfolio_url ? (
+                <a href={profile.portfolio_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-800 transition-colors">
+                  <Globe size={14} /> Portfolio
+                </a>
+              ) : isOwn ? (
+                <button onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-2 text-sm text-slate-400 dark:text-zinc-500 border border-dashed border-slate-200 dark:border-zinc-700 px-4 py-2 rounded-xl hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
+                  <Plus size={14} /> Add Portfolio
+                </button>
+              ) : null}
+
+              {/* Separator if links exist and visitor actions follow */}
+              {!isOwn && (profile.linkedin_url || profile.github_url || profile.portfolio_url) && (
+                <div className="w-px h-6 bg-slate-100 dark:bg-zinc-800 mx-1 shrink-0" />
+              )}
+
+              {/* Visitor actions */}
               {!isOwn && (
                 <Link href={`/messages?with=${profile.id}`}
                   className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 transition-colors">
@@ -300,9 +349,23 @@ export default function ProfilePage() {
                   <Send size={14} /> Request Referral
                 </Link>
               )}
-            </>
+            </div>
           )}
         </div>
+
+        {/* ─── Student ID badge (owner only) ───────────────────────────────────── */}
+        {isOwn && profile.student_id && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-3">MAJU ID</h2>
+            <div className="flex items-center gap-2">
+              <BadgeCheck size={15} className="text-indigo-500 dark:text-indigo-400 shrink-0" />
+              <span className="font-mono text-sm text-slate-700 dark:text-zinc-300 tracking-wide">{profile.student_id}</span>
+              <span className="ml-auto text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800">
+                Verified
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ─── Bio ─────────────────────────────────────────────────────────────── */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
