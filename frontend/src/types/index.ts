@@ -38,12 +38,39 @@ export interface Profile {
   graduation_year?: number | null;
   skills?: string[];
 
+  // Further education (alumni/teachers also pursuing MS, MBA, PhD, etc.)
+  further_edu_degree?:      string | null;   // e.g. "MS Computer Science"
+  further_edu_institution?: string | null;   // e.g. "FAST-NU"
+  further_edu_since?:       string | null;   // e.g. "2024"
+
   // Shared
   bio?: string | null;
   profile_picture_url?: string | null;
 
   created_at: string;
   updated_at: string;
+}
+
+// ─── Profile Completion ────────────────────────────────────────────────────────
+
+export interface CompletionItem {
+  key: string;
+  label: string;
+  hint: string;
+  points: number;
+  done: boolean;
+}
+
+export type CompletionLevel = 'starter' | 'rising' | 'established' | 'pro' | 'complete';
+
+export interface ProfileCompletion {
+  score: number;             // 0-100 (percentage)
+  items: CompletionItem[];
+  level: CompletionLevel;
+  levelLabel: string;
+  levelColor: string;        // tailwind colour name
+  nextMilestone: number;     // next target: 25 / 50 / 75 / 100
+  ptsToNextMilestone: number;
 }
 
 export interface ReferralRequest {

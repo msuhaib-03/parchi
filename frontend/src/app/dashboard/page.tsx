@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Users, Briefcase, MessageCircle, ArrowRight, CheckCircle, Clock } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
+import { calculateCompletion } from '@/lib/profileCompletion';
+import type { Profile } from '@/types';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -68,6 +70,9 @@ export default async function DashboardPage() {
     .eq('is_read', false);
 
   const unread = messageCount ?? 0;
+
+  // ── Profile completion ─────────────────────────────────────────────────────
+  const completion = calculateCompletion(profile as Profile);
 
   // Only include stats with non-zero values
   const stats = [
@@ -142,8 +147,13 @@ export default async function DashboardPage() {
           <ActionCard href="/messages" icon={<MessageCircle size={20} />} title="Messages"
             description={unread > 0 ? `${unread} unread message${unread > 1 ? 's' : ''}` : 'Chat with your connections'}
             badge={unread > 0 ? String(unread) : undefined} color="purple" />
-          <ActionCard href={`/profile/${user.id}`} icon={<CheckCircle size={20} />} title="Complete your profile"
-            description="A complete profile gets more responses from alumni" color="slate" />
+          <CompletionActionCard
+            href={`/profile/${user.id}`}
+            score={completion.score}
+            levelLabel={completion.levelLabel}
+            pending={completion.items.filter((i) => !i.done).length}
+            color={completion.levelColor}
+          />
         </div>
       </main>
     </div>
@@ -164,6 +174,56 @@ function StatCard({ value, label, icon, color }: {
       <div className="text-3xl font-extrabold tracking-tight">{value}</div>
       <div className="text-xs mt-1 opacity-70">{label}</div>
     </div>
+  );
+}
+
+function CompletionActionCard({ href, score, levelLabel, pending, color }: {
+  href: string; score: number; levelLabel: string; pending: number; color: string;
+}) {
+  const ringColors: Record<string, string> = {
+    slate:   '#94a3b8',
+    blue:    '#3b82f6',
+    indigo:  '#6366f1',
+    violet:  '#8b5cf6',
+    emerald: '#10b981',
+  };
+  const ring = ringColors[color] ?? ringColors.indigo;
+  const R = 16;
+  const C = 2 * Math.PI * R;
+
+  return (
+    <Link href={href}
+      className="flex items-start gap-4 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl p-5 hover:shadow-md hover:shadow-slate-100/50 dark:hover:shadow-none hover:border-slate-200 dark:hover:border-zinc-700 transition-all group">
+      {/* Mini ring */}
+      <div className="relative w-11 h-11 shrink-0 mt-0.5">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r={R} fill="none" strokeWidth="4"
+            className="stroke-slate-100 dark:stroke-zinc-800" />
+          <circle cx="20" cy="20" r={R} fill="none" strokeWidth="4"
+            strokeLinecap="round" stroke={ring}
+            strokeDasharray={C}
+            strokeDashoffset={C * (1 - score / 100)}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] font-black text-slate-900 dark:text-zinc-100">{score}%</span>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-slate-900 dark:text-zinc-100 text-sm">Profile Completion</h3>
+          <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded-full">
+            {levelLabel}
+          </span>
+        </div>
+        <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5 leading-relaxed">
+          {score === 100
+            ? 'Your profile is complete! You look great to alumni.'
+            : `${pending} item${pending !== 1 ? 's' : ''} left — a complete profile gets 3× more responses`}
+        </p>
+      </div>
+      <ArrowRight size={15} className="text-slate-300 dark:text-zinc-600 group-hover:text-slate-500 dark:group-hover:text-zinc-400 shrink-0 mt-0.5 transition-colors" />
+    </Link>
   );
 }
 
