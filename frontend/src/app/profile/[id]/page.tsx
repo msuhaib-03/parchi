@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
-import { DEPARTMENTS } from '@/types';
+import { DEPARTMENTS, validateMajuId } from '@/types';
 import {
   Edit2, Save, X, Briefcase, Link2,
   GraduationCap, Building2, CheckCircle, Plus,
@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState('');
+  const [idError, setIdError]         = useState('');
   const [skillInput, setSkillInput]   = useState('');
 
   const [form, setForm] = useState<Partial<Profile>>({});
@@ -64,6 +65,16 @@ export default function ProfilePage() {
     if (!profile) return;
     setSaving(true);
     setError('');
+    setIdError('');
+
+    // Validate MAJU ID format if provided
+    if (form.student_id?.trim()) {
+      if (!validateMajuId(form.student_id.trim())) {
+        setIdError('Invalid format. Use: FA22-BSCS-0114 (semester-dept-number)');
+        setSaving(false);
+        return;
+      }
+    }
 
     // Step 1 — core fields (always present in schema)
     const { data, error: coreErr } = await supabase
@@ -79,6 +90,7 @@ export default function ProfilePage() {
         is_open_to_referrals: form.is_open_to_referrals,
         skills:               form.skills,
         graduation_year:      form.graduation_year,
+        student_id:           form.student_id?.trim() || null,
         updated_at:           new Date().toISOString(),
       })
       .eq('id', profile.id)
@@ -504,17 +516,58 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ── MAJU ID badge (owner only) ────────────────────────────────────── */}
-        {isOwn && profile.student_id && (
+        {/* ── MAJU ID (owner only — always shown so they can add/edit it) ─────── */}
+        {isOwn && (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-3">MAJU ID</h2>
-            <div className="flex items-center gap-2">
-              <BadgeCheck size={15} className="text-indigo-500 dark:text-indigo-400 shrink-0" />
-              <span className="font-mono text-sm text-slate-700 dark:text-zinc-300 tracking-wide">{profile.student_id}</span>
-              <span className="ml-auto text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800">
-                Verified
-              </span>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">MAJU ID</h2>
+              {profile.student_id && !isEditing && (
+                <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800">
+                  Verified
+                </span>
+              )}
             </div>
+
+            {isEditing ? (
+              <div>
+                <div className="relative">
+                  <BadgeCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                  <input
+                    value={form.student_id ?? ''}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, student_id: e.target.value }));
+                      setIdError('');
+                    }}
+                    placeholder={isAlumni ? 'e.g. FA19-BSCS-0047' : 'e.g. FA22-BSCS-0114'}
+                    className={cn(
+                      inputCls, 'pl-9 font-mono',
+                      idError ? 'border-red-300 dark:border-red-700 ring-1 ring-red-200 dark:ring-red-800' : ''
+                    )}
+                  />
+                </div>
+                {idError ? (
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{idError}</p>
+                ) : (
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1.5">
+                    Format: <span className="font-mono">FA22-BSCS-0114</span> · semester · department · roll number
+                  </p>
+                )}
+              </div>
+            ) : profile.student_id ? (
+              <div className="flex items-center gap-2">
+                <BadgeCheck size={15} className="text-indigo-500 dark:text-indigo-400 shrink-0" />
+                <span className="font-mono text-sm text-slate-700 dark:text-zinc-300 tracking-wide">
+                  {profile.student_id}
+                </span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 text-sm text-slate-400 dark:text-zinc-500 border border-dashed border-slate-200 dark:border-zinc-700 px-4 py-2 rounded-xl hover:border-slate-300 dark:hover:border-zinc-600 transition-colors"
+              >
+                <Plus size={14} /> Add your MAJU ID
+              </button>
+            )}
           </div>
         )}
 
