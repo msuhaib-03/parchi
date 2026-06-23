@@ -4,7 +4,7 @@
 
 Parchi is a free alumni-student networking platform built exclusively for **Muhammad Ali Jinnah University (MAJU)**. It connects current students with MAJU alumni working at top companies — for referrals, mentorship, and real industry insights. No connections needed. No wasta. Just talent.
 
-🔗 **Live at → [parchi-eta.vercel.app](https://parchi-eta.vercel.app)**
+🔗 **Live at → [parchi-maju.vercel.app](https://parchi-maju.vercel.app)**
 
 ---
 
