@@ -205,6 +205,77 @@ export interface Post {
   author?: Pick<Profile, 'id' | 'full_name' | 'role' | 'department'>;
 }
 
+// ─── Interview Prep Corner ──────────────────────────────────────────────────
+
+export type InterviewDifficulty = 'easy' | 'medium' | 'hard';
+export type InterviewOutcome    = 'offer' | 'rejected' | 'in_progress' | 'withdrew';
+export type ResourceType        = 'guide' | 'question_bank' | 'cheatsheet' | 'video' | 'article' | 'course' | 'other';
+
+export interface InterviewExperience {
+  id: string;
+  author_id: string;
+  company: string;
+  role: string;
+  department?: string | null;
+  interview_date?: string | null;
+  difficulty: InterviewDifficulty;
+  outcome: InterviewOutcome;
+  num_rounds?: number | null;
+  process: string;
+  questions: string;
+  tips?: string | null;
+  tags?: string[] | null;
+  is_anonymous: boolean;
+  helpful_count: number;
+  created_at: string;
+  updated_at: string;
+
+  // From the read view (interview_experiences_feed): author identity is nulled for
+  // anonymous rows unless you're the owner. i_found_helpful is computed client-side.
+  author_name?: string | null;
+  author_batch_year?: number | null;
+  i_found_helpful?: boolean;
+}
+
+export interface PrepResource {
+  id: string;
+  author_id: string;
+  title: string;
+  resource_type: ResourceType;
+  url?: string | null;
+  description: string;
+  tags?: string[] | null;
+  helpful_count: number;
+  created_at: string;
+  updated_at: string;
+
+  // Joined / client-computed
+  author?: Pick<Profile, 'id' | 'full_name' | 'role' | 'job_title' | 'current_company'>;
+  i_found_helpful?: boolean;
+}
+
+export interface InterviewExperienceFormData {
+  company: string;
+  role: string;
+  interview_date?: string;
+  difficulty: InterviewDifficulty;
+  outcome: InterviewOutcome;
+  num_rounds?: number | null;
+  process: string;
+  questions: string;
+  tips?: string;
+  tags?: string[];
+  is_anonymous: boolean;
+}
+
+export interface PrepResourceFormData {
+  title: string;
+  resource_type: ResourceType;
+  url?: string;
+  description: string;
+  tags?: string[];
+}
+
 // ─── Form types ───────────────────────────────────────────────────────────────
 
 export interface ReferralFormData {
@@ -323,4 +394,32 @@ export const JOB_TYPE_COLORS: Record<JobType, string> = {
   'internship': 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800',
   'contract':   'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
   'remote':     'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
+};
+
+// ─── Interview Prep labels & colours ────────────────────────────────────────
+
+export const DIFFICULTY_LABELS: Record<InterviewDifficulty, string> = {
+  easy: 'Easy', medium: 'Medium', hard: 'Hard',
+};
+
+export const DIFFICULTY_COLORS: Record<InterviewDifficulty, string> = {
+  easy:   'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+  medium: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+  hard:   'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+};
+
+export const OUTCOME_LABELS: Record<InterviewOutcome, string> = {
+  offer: 'Got offer', rejected: 'Rejected', in_progress: 'In progress', withdrew: 'Withdrew',
+};
+
+export const OUTCOME_COLORS: Record<InterviewOutcome, string> = {
+  offer:       'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+  rejected:    'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+  in_progress: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+  withdrew:    'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700',
+};
+
+export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
+  guide: 'Guide', question_bank: 'Question Bank', cheatsheet: 'Cheatsheet',
+  video: 'Video', article: 'Article', course: 'Course', other: 'Other',
 };

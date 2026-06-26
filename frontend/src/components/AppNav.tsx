@@ -7,7 +7,7 @@ import {
   Menu, X, LayoutDashboard, Users, Briefcase,
   MessageCircle, User, LogOut, Loader2, Building2,
   Bell, BriefcaseBusiness, Trophy, CheckCircle2, XCircle,
-  ChevronDown,
+  ChevronDown, ClipboardList,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
@@ -44,9 +44,10 @@ const PRIMARY_NAV = [
 
 // Secondary links live inside the "More" dropdown on desktop
 const MORE_NAV = [
-  { href: '/referrals', label: 'Referrals', icon: BriefcaseBusiness },
-  { href: '/jobs',      label: 'Jobs',       icon: Building2 },
-  { href: '/stories',   label: 'Stories',    icon: Trophy },
+  { href: '/referrals',      label: 'Referrals',      icon: BriefcaseBusiness },
+  { href: '/jobs',           label: 'Jobs',           icon: Building2 },
+  { href: '/interview-prep', label: 'Interview Prep', icon: ClipboardList },
+  { href: '/stories',        label: 'Stories',        icon: Trophy },
 ];
 
 // Mobile drawer gets everything (primary + more + profile)
