@@ -4,7 +4,7 @@
 
 Parchi is a free alumni-student networking platform built exclusively for **Muhammad Ali Jinnah University (MAJU)**. It connects current students with MAJU alumni working at top companies — for referrals, mentorship, and real industry insights. No connections needed. No wasta. Just talent.
 
-🔗 **Live at → [parchi-eta.vercel.app](https://parchi-eta.vercel.app)**
+🔗 **Live at → [parchi-maju.vercel.app](https://parchi-maju.vercel.app)**
 
 ---
 
@@ -58,18 +58,18 @@ Parchi.maju fixes that.
 Parchi is a **Progressive Web App** — no app store needed. Install it directly from your browser.
 
 ### Android (Chrome or Edge)
-1. Open **[parchi-eta.vercel.app](https://parchi-eta.vercel.app)** in Chrome or Edge
+1. Open **[parchi-maju.vercel.app](https://parchi-maju.vercel.app)** in Chrome or Edge
 2. Tap the **install banner** that appears at the bottom, OR tap the 3-dot menu → **"Add to Home screen"**
 3. Tap **Add** — done! The Parchi icon appears on your home screen
 
 ### iPhone / iPad (Safari)
-1. Open **[parchi-eta.vercel.app](https://parchi-eta.vercel.app)** in Safari
+1. Open **[parchi-maju.vercel.app](https://parchi-maju.vercel.app)** in Safari
 2. Tap the **Share button** (box with arrow at the bottom)
 3. Scroll down and tap **"Add to Home Screen"**
 4. Tap **Add** — done!
 
 ### Windows Desktop (Chrome or Edge)
-1. Open **[parchi-eta.vercel.app](https://parchi-eta.vercel.app)** in Chrome or Edge
+1. Open **[parchi-maju.vercel.app](https://parchi-maju.vercel.app)** in Chrome or Edge
 2. Click the **install icon** in the address bar (looks like a `+` or monitor icon)
 3. Click **Install** — Parchi appears in your Start Menu and taskbar
 
