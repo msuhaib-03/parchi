@@ -10,7 +10,7 @@ import {
   Edit2, Save, X, Briefcase, Link2,
   GraduationCap, Building2, CheckCircle, Plus,
   ExternalLink, MessageCircle, Send, Loader2,
-  GitBranch, Globe, BadgeCheck, BookOpen,
+  GitBranch, Globe, BadgeCheck, BookOpen, Mail,
 } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
 import { ProfileCompletionCard } from '@/components/ProfileCompletionCard';
@@ -37,6 +37,10 @@ export default function ProfilePage() {
   const [idError, setIdError]         = useState('');
   const [skillInput, setSkillInput]   = useState('');
 
+  // Weekly digest email preference — instant-save toggle (independent of edit mode)
+  const [digestPref, setDigestPref]   = useState(true);
+  const [savingPref, setSavingPref]   = useState(false);
+
   const [form, setForm] = useState<Partial<Profile>>({});
 
   const isOwn     = currentUserId === id;
@@ -56,9 +60,30 @@ export default function ProfilePage() {
       if (fetchErr || !data) { router.push('/dashboard'); return; }
       setProfile(data as Profile);
       setForm(data as Profile);
+      setDigestPref((data as Profile).email_weekly_digest ?? true);
       setLoading(false);
     })();
   }, [id, supabase, router]);
+
+  // ── Weekly digest opt-in/out (saves immediately, no edit mode) ──────────────
+  const toggleDigest = async () => {
+    if (!profile || savingPref) return;
+    const next = !digestPref;
+    setDigestPref(next);          // optimistic
+    setSavingPref(true);
+    const { error: prefErr } = await supabase
+      .from('profiles')
+      .update({ email_weekly_digest: next })
+      .eq('id', profile.id);
+    setSavingPref(false);
+    if (prefErr) {
+      setDigestPref(!next);       // revert on failure
+      setError(
+        '⚠️ Email preferences need a one-time DB migration. ' +
+        'Run supabase/weekly_digest_migration.sql in Supabase → SQL Editor, then try again.'
+      );
+    }
+  };
 
   // ── Save ────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -568,6 +593,40 @@ export default function ProfilePage() {
                 <Plus size={14} /> Add your MAJU ID
               </button>
             )}
+          </div>
+        )}
+
+        {/* ── Email preferences (owner only — instant save) ──────────────────── */}
+        {isOwn && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 transition-colors">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center shrink-0">
+                  <Mail size={16} className="text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                    Weekly digest email
+                    {savingPref && <Loader2 size={12} className="animate-spin text-slate-400" />}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                    A short weekly summary of new jobs{profile.role === 'student' ? ' matched to your skills' : ''}, alumni, and success stories. You can opt out anytime.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleDigest}
+                disabled={savingPref}
+                role="switch"
+                aria-checked={digestPref}
+                aria-label="Toggle weekly digest email"
+                className="relative shrink-0 disabled:opacity-60"
+              >
+                <div className={`w-11 h-6 rounded-full transition-colors ${digestPref ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-700'}`} />
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${digestPref ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
           </div>
         )}
 

@@ -47,6 +47,9 @@ export interface Profile {
   bio?: string | null;
   profile_picture_url?: string | null;
 
+  // Email preferences
+  email_weekly_digest?: boolean;   // opt-out flag for the weekly digest (default true)
+
   created_at: string;
   updated_at: string;
 }

@@ -1,0 +1,13 @@
+# Supabase CLI config.
+# Only used if you deploy Edge Functions via the CLI instead of the dashboard.
+# project_id is a LOCAL label — NOT your project reference ID.
+project_id = "parchi"
+
+# Both functions are called without a user login (cron / email-link clicks),
+# so JWT verification must be off. Security is enforced inside the functions
+# (x-digest-secret header for the digest, signed HMAC token for unsubscribe).
+[functions.weekly-digest]
+verify_jwt = false
+
+[functions.email-unsubscribe]
+verify_jwt = false
