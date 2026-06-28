@@ -15,7 +15,7 @@ export default function LogoutButton() {
     setLoading(true);
     await supabase.auth.signOut();
     toast.success('Logged out. See you soon!');
-    router.push('/');
+    setTimeout(() => router.push('/'), 800);
   };
 
   return (
