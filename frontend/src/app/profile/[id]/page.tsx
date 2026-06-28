@@ -179,7 +179,35 @@ export default function ProfilePage() {
       }
     }
 
-    // Merge the freshest data (step 2+3 updated in place, refetch to be safe)
+    // Step 4 — employment fields (require profile_employment_migration.sql)
+    const needsEmployment =
+      form.employment_type !== profile.employment_type ||
+      form.company_2       !== profile.company_2 ||
+      form.job_title_2     !== profile.job_title_2;
+
+    if (needsEmployment) {
+      const { error: empErr } = await supabase
+        .from('profiles')
+        .update({
+          employment_type: form.employment_type ?? null,
+          company_2:       form.company_2?.trim()   || null,
+          job_title_2:     form.job_title_2?.trim() || null,
+        })
+        .eq('id', profile.id);
+
+      if (empErr) {
+        setError(
+          '⚠️ Employment fields need a one-time DB migration. ' +
+          'Run supabase/profile_employment_migration.sql in Supabase → SQL Editor, then save again.'
+        );
+        setProfile(data as Profile);
+        setForm(data as Profile);
+        setIsEditing(false);
+        return;
+      }
+    }
+
+    // Merge the freshest data (steps 2-4 updated in place, refetch to be safe)
     const { data: fresh } = await supabase
       .from('profiles').select('*').eq('id', profile.id).single();
 
@@ -329,6 +357,18 @@ export default function ProfilePage() {
                         </div>
                       )}
 
+                      {/* ── Second role (optional) ───────────────────────── */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="relative">
+                          <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                          <input value={form.company_2 ?? ''} onChange={(e) => setForm((f) => ({ ...f, company_2: e.target.value }))} placeholder="Second company (optional)" className={cn(inputCls, 'pl-9')} />
+                        </div>
+                        <div className="relative">
+                          <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                          <input value={form.job_title_2 ?? ''} onChange={(e) => setForm((f) => ({ ...f, job_title_2: e.target.value }))} placeholder="Second title (optional)" className={cn(inputCls, 'pl-9')} />
+                        </div>
+                      </div>
+
                       {/* ── Further Education ──────────────────────────── */}
                       <div className="border border-dashed border-slate-200 dark:border-zinc-700 rounded-xl p-3 space-y-2">
                         <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -379,6 +419,15 @@ export default function ProfilePage() {
                           {profile.current_company && <span>{profile.current_company}</span>}
                         </p>
                       )}
+                      {/* Second role line */}
+                      {(profile.job_title_2 || profile.company_2) && (
+                        <p className="text-sm text-slate-600 dark:text-zinc-300 flex items-center gap-1.5">
+                          <Building2 size={13} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+                          {profile.job_title_2 && <span className="font-medium">{profile.job_title_2}</span>}
+                          {profile.job_title_2 && profile.company_2 && <span className="text-slate-300 dark:text-zinc-600">·</span>}
+                          {profile.company_2 && <span>{profile.company_2}</span>}
+                        </p>
+                      )}
                       {/* Further education line */}
                       {profile.further_edu_degree && (
                         <p className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
@@ -405,24 +454,80 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* ── Student graduation year ────────────────────────────── */}
+              {/* ── Student graduation year + work experience ─────────── */}
               {!isAlumniOrTeacher && (
                 <div className="mt-2">
                   {isEditing ? (
-                    <input type="number"
-                      value={form.graduation_year ?? ''}
-                      onChange={(e) => setForm((f) => ({ ...f, graduation_year: parseInt(e.target.value) || undefined }))}
-                      placeholder="Expected graduation year (e.g. 2026)"
-                      className={cn(inputCls, 'mt-2')}
-                      min={2020} max={2035}
-                    />
+                    <div className="space-y-2 mt-2">
+                      <input type="number"
+                        value={form.graduation_year ?? ''}
+                        onChange={(e) => setForm((f) => ({ ...f, graduation_year: parseInt(e.target.value) || undefined }))}
+                        placeholder="Expected graduation year (e.g. 2026)"
+                        className={inputCls}
+                        min={2020} max={2035}
+                      />
+                      {/* Work experience */}
+                      <div className="border border-dashed border-slate-200 dark:border-zinc-700 rounded-xl p-3 space-y-2">
+                        <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Briefcase size={11} /> Work Experience (optional)
+                        </p>
+                        <select
+                          value={form.employment_type ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value as 'employed' | 'interning' | 'past_intern' | '';
+                            setForm((f) => ({
+                              ...f,
+                              employment_type: val || null,
+                              ...(val ? {} : { current_company: '', job_title: '' }),
+                            }));
+                          }}
+                          className={inputCls}
+                        >
+                          <option value="">No work experience</option>
+                          <option value="employed">Currently Employed</option>
+                          <option value="interning">Current Intern</option>
+                          <option value="past_intern">Past Intern</option>
+                        </select>
+                        {form.employment_type && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="relative">
+                              <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                              <input value={form.current_company ?? ''} onChange={(e) => setForm((f) => ({ ...f, current_company: e.target.value }))} placeholder="Company" className={cn(inputCls, 'pl-9')} />
+                            </div>
+                            <div className="relative">
+                              <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                              <input value={form.job_title ?? ''} onChange={(e) => setForm((f) => ({ ...f, job_title: e.target.value }))} placeholder="Role / Title" className={cn(inputCls, 'pl-9')} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
-                    profile.graduation_year && (
-                      <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-1.5">
-                        <GraduationCap size={13} className="text-slate-400 dark:text-zinc-500" />
-                        Graduating {profile.graduation_year}
-                      </p>
-                    )
+                    <div className="mt-1 space-y-1.5">
+                      {profile.graduation_year && (
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                          <GraduationCap size={13} className="text-slate-400 dark:text-zinc-500" />
+                          Graduating {profile.graduation_year}
+                        </p>
+                      )}
+                      {profile.employment_type && (profile.job_title || profile.current_company) && (
+                        <p className="text-sm text-slate-600 dark:text-zinc-300 flex items-center gap-1.5 flex-wrap">
+                          <Briefcase size={13} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+                          {profile.job_title && <span className="font-medium">{profile.job_title}</span>}
+                          {profile.job_title && profile.current_company && <span className="text-slate-300 dark:text-zinc-600">·</span>}
+                          {profile.current_company && <span>{profile.current_company}</span>}
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            profile.employment_type === 'employed'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                              : profile.employment_type === 'interning'
+                              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                              : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'
+                          }`}>
+                            {profile.employment_type === 'employed' ? 'Employed' : profile.employment_type === 'interning' ? 'Interning' : 'Past Intern'}
+                          </span>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

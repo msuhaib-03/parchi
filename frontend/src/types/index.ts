@@ -43,9 +43,16 @@ export interface Profile {
   skills?: string[];
 
   // Further education (alumni/teachers also pursuing MS, MBA, PhD, etc.)
-  further_edu_degree?:      string | null;   // e.g. "MS Computer Science"
-  further_edu_institution?: string | null;   // e.g. "FAST-NU"
-  further_edu_since?:       string | null;   // e.g. "2024"
+  further_edu_degree?:      string | null;
+  further_edu_institution?: string | null;
+  further_edu_since?:       string | null;
+
+  // Student work experience (employed/interning alongside studies)
+  employment_type?: 'employed' | 'interning' | 'past_intern' | null;
+
+  // Second role (alumni/teachers holding two positions)
+  company_2?:   string | null;
+  job_title_2?: string | null;
 
   // Shared
   bio?: string | null;
