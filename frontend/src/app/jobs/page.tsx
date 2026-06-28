@@ -126,8 +126,14 @@ function JobsPageInner() {
   const formatDate = (ts: string) =>
     new Date(ts).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  const deadlineSoon = (deadline?: string | null) =>
-    deadline ? new Date(deadline).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 : false;
+  const deadlinePassed = (deadline?: string | null) =>
+    !!deadline && new Date(deadline).getTime() < Date.now();
+
+  const deadlineSoon = (deadline?: string | null) => {
+    if (!deadline) return false;
+    const t = new Date(deadline).getTime();
+    return t > Date.now() && t - Date.now() < 3 * 24 * 60 * 60 * 1000;
+  };
 
   // Filter + sort
   const filteredJobs = useMemo(() => {
@@ -278,11 +284,12 @@ function JobsPageInner() {
         ) : (
           <div className="space-y-4">
             {filteredJobs.map((job) => {
-              const applied    = !!job.my_application;
-              const isOwner    = job.posted_by === currentUser?.id;
-              const showingCL  = showCLFor === job.id;
-              const matchInfo  = getMatchInfo(currentUser?.skills, job.tags);
+              const applied       = !!job.my_application;
+              const isOwner       = job.posted_by === currentUser?.id;
+              const showingCL     = showCLFor === job.id;
+              const matchInfo     = getMatchInfo(currentUser?.skills, job.tags);
               const isHighlighted = job.id === highlightId;
+              const isExpired     = deadlinePassed(job.deadline);
 
               return (
                 <div
@@ -290,11 +297,13 @@ function JobsPageInner() {
                   id={`job-${job.id}`}
                   className={cn(
                     'bg-white dark:bg-zinc-900 rounded-2xl border p-5 transition-all',
-                    isHighlighted
-                      ? 'border-indigo-400 dark:border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-900'
-                      : matchInfo.level === 'strong'
-                        ? 'border-emerald-200 dark:border-emerald-900 hover:border-emerald-300 dark:hover:border-emerald-800'
-                        : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'
+                    isExpired
+                      ? 'border-slate-100 dark:border-zinc-800 opacity-60'
+                      : isHighlighted
+                        ? 'border-indigo-400 dark:border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-900'
+                        : matchInfo.level === 'strong'
+                          ? 'border-emerald-200 dark:border-emerald-900 hover:border-emerald-300 dark:hover:border-emerald-800'
+                          : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'
                   )}
                 >
                   {/* Top row */}
@@ -338,9 +347,16 @@ function JobsPageInner() {
                         </div>
 
                         {/* Job type badge */}
-                        <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border ${JOB_TYPE_COLORS[job.job_type]}`}>
-                          {JOB_TYPE_LABELS[job.job_type]}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isExpired && (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700">
+                              Closed
+                            </span>
+                          )}
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${JOB_TYPE_COLORS[job.job_type]}`}>
+                            {JOB_TYPE_LABELS[job.job_type]}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Meta row */}
@@ -355,13 +371,19 @@ function JobsPageInner() {
                           <Clock size={11} /> {formatDate(job.created_at)}
                         </span>
                         {job.deadline && (
-                          <span className={cn(
-                            'flex items-center gap-1',
-                            deadlineSoon(job.deadline) && 'text-amber-500 dark:text-amber-400 font-semibold'
-                          )}>
-                            Deadline: {formatDate(job.deadline)}
-                            {deadlineSoon(job.deadline) && ' · closing soon'}
-                          </span>
+                          isExpired ? (
+                            <span className="flex items-center gap-1 text-red-500 dark:text-red-400 font-semibold">
+                              Deadline passed · {formatDate(job.deadline)}
+                            </span>
+                          ) : (
+                            <span className={cn(
+                              'flex items-center gap-1',
+                              deadlineSoon(job.deadline) && 'text-amber-500 dark:text-amber-400 font-semibold'
+                            )}>
+                              Deadline: {formatDate(job.deadline)}
+                              {deadlineSoon(job.deadline) && ' · closing soon'}
+                            </span>
+                          )
                         )}
                         {job.poster && (
                           <span className="flex items-center gap-1">
@@ -415,7 +437,7 @@ function JobsPageInner() {
                   )}
 
                   {/* Cover letter textarea */}
-                  {showingCL && isStudent && !applied && !isOwner && (
+                  {showingCL && isStudent && !applied && !isOwner && !isExpired && (
                     <div className="mt-4">
                       <textarea
                         value={coverLetter[job.id] ?? ''}
@@ -430,16 +452,26 @@ function JobsPageInner() {
                   {/* Action buttons */}
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
                     {job.apply_url && (
-                      <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 transition-colors">
-                        <ExternalLink size={13} /> Apply Online
-                      </a>
+                      isExpired ? (
+                        <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 dark:text-zinc-600 px-4 py-2 rounded-xl border border-slate-100 dark:border-zinc-800 cursor-not-allowed select-none">
+                          <ExternalLink size={13} /> Apply Online
+                        </span>
+                      ) : (
+                        <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 transition-colors">
+                          <ExternalLink size={13} /> Apply Online
+                        </a>
+                      )
                     )}
 
                     {isStudent && !isOwner && (
                       applied ? (
                         <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 px-3 py-2 rounded-xl capitalize">
                           Applied · {job.my_application?.status}
+                        </span>
+                      ) : isExpired ? (
+                        <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-3 py-2 rounded-xl">
+                          Applications closed
                         </span>
                       ) : job.apply_email ? (
                         <button
