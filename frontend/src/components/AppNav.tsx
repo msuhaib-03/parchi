@@ -12,6 +12,7 @@ import {
 import type { Notification, NotificationType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface AppNavProps {
@@ -124,7 +125,8 @@ export function AppNav({ userName, userId, unreadCount = 0 }: AppNavProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     await supabase.auth.signOut();
-    router.push('/');
+    toast.success('Logged out. See you soon!');
+    setTimeout(() => router.push('/'), 900);
   };
 
   const isActive = (href: string) =>
