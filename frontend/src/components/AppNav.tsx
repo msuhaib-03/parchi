@@ -7,7 +7,7 @@ import {
   Menu, X, LayoutDashboard, Users, Briefcase,
   MessageCircle, User, LogOut, Loader2, Building2,
   Bell, BriefcaseBusiness, Trophy, CheckCircle2, XCircle,
-  ChevronDown, ClipboardList,
+  ChevronDown, ClipboardList, GraduationCap, UserCheck, UserX, CalendarClock,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
@@ -29,8 +29,12 @@ function getNotifMeta(type: string): { Icon: React.ElementType; bg: string; fg: 
     case 'referral_rejected': return { Icon: XCircle,          bg: 'bg-red-100 dark:bg-red-900/40',        fg: 'text-red-500 dark:text-red-400'         };
     case 'application_update':return { Icon: Briefcase,        bg: 'bg-blue-100 dark:bg-blue-900/40',      fg: 'text-blue-600 dark:text-blue-400'       };
     case 'story_posted':      return { Icon: Trophy,           bg: 'bg-amber-100 dark:bg-amber-900/40',    fg: 'text-amber-500 dark:text-amber-400'     };
-    case 'message_received':  return { Icon: MessageCircle,    bg: 'bg-teal-100 dark:bg-teal-900/40',      fg: 'text-teal-600 dark:text-teal-400'       };
-    default:                  return { Icon: Bell,             bg: 'bg-slate-100 dark:bg-zinc-800',        fg: 'text-slate-500 dark:text-zinc-400'      };
+    case 'message_received':    return { Icon: MessageCircle,  bg: 'bg-teal-100 dark:bg-teal-900/40',      fg: 'text-teal-600 dark:text-teal-400'       };
+    case 'mentorship_request':  return { Icon: GraduationCap, bg: 'bg-violet-100 dark:bg-violet-900/40',  fg: 'text-violet-600 dark:text-violet-400'   };
+    case 'mentorship_accepted': return { Icon: UserCheck,     bg: 'bg-emerald-100 dark:bg-emerald-900/40',fg: 'text-emerald-600 dark:text-emerald-400' };
+    case 'mentorship_declined': return { Icon: UserX,         bg: 'bg-red-100 dark:bg-red-900/40',        fg: 'text-red-500 dark:text-red-400'         };
+    case 'session_booked':      return { Icon: CalendarClock, bg: 'bg-indigo-100 dark:bg-indigo-900/40',  fg: 'text-indigo-600 dark:text-indigo-400'   };
+    default:                    return { Icon: Bell,           bg: 'bg-slate-100 dark:bg-zinc-800',        fg: 'text-slate-500 dark:text-zinc-400'      };
   }
 }
 
@@ -47,6 +51,7 @@ const MORE_NAV = [
   { href: '/referrals',      label: 'Referrals',      icon: BriefcaseBusiness },
   { href: '/jobs',           label: 'Jobs',           icon: Building2 },
   { href: '/interview-prep', label: 'Interview Prep', icon: ClipboardList },
+  { href: '/mentorship',     label: 'Mentorship',     icon: GraduationCap },
   { href: '/stories',        label: 'Stories',        icon: Trophy },
 ];
 

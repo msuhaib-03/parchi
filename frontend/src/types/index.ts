@@ -12,7 +12,11 @@ export type NotificationType =
   | 'message_received'
   | 'job_posted'
   | 'application_update'
-  | 'story_posted';
+  | 'story_posted'
+  | 'mentorship_request'
+  | 'mentorship_accepted'
+  | 'mentorship_declined'
+  | 'session_booked';
 export type PostType = 'blog' | 'paper' | 'announcement';
 
 export interface Profile {
@@ -423,3 +427,104 @@ export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
   guide: 'Guide', question_bank: 'Question Bank', cheatsheet: 'Cheatsheet',
   video: 'Video', article: 'Article', course: 'Course', other: 'Other',
 };
+
+// ─── Mentorship Program ────────────────────────────────────────────────────────
+
+export type MentorshipRequestStatus = 'pending' | 'accepted' | 'declined' | 'ended' | 'cancelled';
+export type SessionStatus           = 'scheduled' | 'completed' | 'cancelled';
+export type SessionFormat           = 'video' | 'in_person' | 'both' | 'async_chat';
+
+export const MENTOR_AREAS = [
+  'Career Guidance',
+  'Technical Skills',
+  'Research',
+  'Entrepreneurship',
+  'MBA / MS Guidance',
+  'Industry Insights',
+  'Job Search',
+  'Interview Prep',
+  'Networking',
+  'Work-Life Balance',
+  'Leadership',
+  'Project Management',
+] as const;
+export type MentorArea = typeof MENTOR_AREAS[number];
+
+export const SESSION_FORMAT_LABELS: Record<SessionFormat, string> = {
+  video:       'Video Call',
+  in_person:   'In-Person',
+  both:        'Video or In-Person',
+  async_chat:  'Async Chat',
+};
+
+export const SESSION_DURATION_OPTIONS = [15, 30, 45, 60, 90] as const;
+
+export interface Mentor {
+  id: string;
+  areas: string[];
+  tagline?: string | null;
+  mentorship_bio?: string | null;
+  max_mentees: number;
+  is_accepting: boolean;
+  session_format: SessionFormat;
+  meeting_link?: string | null;
+  active_mentee_count: number;
+  created_at: string;
+  updated_at: string;
+
+  // From mentors_with_stats view (joined from profiles)
+  full_name: string;
+  department: string;
+  batch_year: number;
+  current_company?: string | null;
+  job_title?: string | null;
+  profile_picture_url?: string | null;
+  linkedin_url?: string | null;
+  avg_rating: number;
+  review_count: number;
+}
+
+export interface MentorshipRequest {
+  id: string;
+  student_id: string;
+  mentor_id: string;
+  area: string;
+  goal: string;
+  status: MentorshipRequestStatus;
+  mentor_note?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  student?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year' | 'profile_picture_url' | 'skills'>;
+  mentor?:  Pick<Profile, 'id' | 'full_name' | 'job_title' | 'current_company' | 'profile_picture_url'>;
+}
+
+export interface MentorSession {
+  id: string;
+  request_id: string;
+  mentor_id: string;
+  student_id: string;
+  scheduled_at: string;
+  duration_mins: number;
+  agenda: string;
+  status: SessionStatus;
+  session_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  mentor?:   Pick<Profile, 'id' | 'full_name' | 'profile_picture_url'>;
+  student?:  Pick<Profile, 'id' | 'full_name' | 'profile_picture_url'>;
+  my_review?: MentorReview | null;
+}
+
+export interface MentorReview {
+  id: string;
+  session_id: string;
+  reviewer_id: string;
+  mentor_id: string;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+
+  reviewer?: Pick<Profile, 'id' | 'full_name' | 'department' | 'batch_year'>;
+}

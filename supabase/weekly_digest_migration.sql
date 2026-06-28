@@ -55,10 +55,10 @@ SELECT cron.schedule(
   '0 3 * * 1',
   $$
   SELECT net.http_post(
-    url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/weekly-digest',
+    url     := 'https://sukrbjppfwldtsxhlwto.supabase.co/functions/v1/weekly-digest',
     headers := jsonb_build_object(
       'Content-Type',    'application/json',
-      'x-digest-secret', '<DIGEST_CRON_SECRET>'
+      'x-digest-secret', 'cd28c009a798300f2693c53f0d0ecd4666c06838b9109c6cfc6973a7ca29150a'
     ),
     body    := '{}'::jsonb,
     timeout_milliseconds := 300000
