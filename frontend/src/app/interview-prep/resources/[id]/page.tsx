@@ -8,6 +8,7 @@ import type { Profile, PrepResource } from '@/types';
 import { RESOURCE_TYPE_LABELS } from '@/types';
 import { AppNav } from '@/components/AppNav';
 import { HelpfulButton } from '@/components/HelpfulButton';
+import { toast } from 'sonner';
 import {
   Loader2, ArrowLeft, BookOpen, ExternalLink, Edit2, Trash2,
 } from 'lucide-react';
@@ -49,7 +50,8 @@ export default function ResourceDetailPage() {
     setDeleting(true);
     const { error } = await supabase.from('prep_resources').delete().eq('id', res.id);
     setDeleting(false);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
+    toast.success('Resource deleted.');
     router.push('/interview-prep?tab=resources');
   };
 

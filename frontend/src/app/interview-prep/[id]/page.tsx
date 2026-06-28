@@ -12,6 +12,7 @@ import {
   Loader2, ArrowLeft, Building2, Layers, Edit2, Trash2,
   MessageCircle, ListChecks, MessageSquareQuote, Lightbulb, Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ExperienceDetailPage() {
   const { id }   = useParams<{ id: string }>();
@@ -50,7 +51,8 @@ export default function ExperienceDetailPage() {
     setDeleting(true);
     const { error } = await supabase.from('interview_experiences').delete().eq('id', exp.id);
     setDeleting(false);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
+    toast.success('Experience deleted.');
     router.push('/interview-prep');
   };
 

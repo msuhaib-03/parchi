@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,6 +47,13 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Analytics />
+          <Toaster
+            position="bottom-right"
+            richColors
+            toastOptions={{
+              style: { fontFamily: 'var(--font-geist-sans)' },
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

@@ -8,6 +8,7 @@ import type { Profile, ResourceType, PrepResourceFormData } from '@/types';
 import { RESOURCE_TYPE_LABELS } from '@/types';
 import { AppNav } from '@/components/AppNav';
 import { Loader2, ArrowLeft, BookOpen, Link2, Tag } from 'lucide-react';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -89,12 +90,14 @@ function NewResourceInner() {
       const { error: upErr } = await supabase.from('prep_resources').update(payload).eq('id', editId);
       setSubmitting(false);
       if (upErr) { setError(upErr.message); return; }
+      toast.success('Resource updated!');
       router.push(`/interview-prep/resources/${editId}`);
     } else {
       const { data, error: insErr } = await supabase.from('prep_resources')
         .insert({ ...payload, author_id: me!.id }).select('id').single();
       setSubmitting(false);
       if (insErr || !data) { setError(insErr?.message ?? 'Could not save.'); return; }
+      toast.success('Resource published!');
       router.push(`/interview-prep/resources/${data.id}`);
     }
   };

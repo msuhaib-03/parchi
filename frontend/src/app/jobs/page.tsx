@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,13 +113,14 @@ function JobsPageInner() {
       cover_letter: coverLetter[jobId]?.trim() || null,
     });
     setApplying(null);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
     setJobs((prev) => prev.map((j) =>
       j.id === jobId
         ? { ...j, my_application: { id: '', status: 'applied', job_id: jobId, applicant_id: currentUser.id, created_at: '' } }
         : j,
     ));
     setShowCLFor(null);
+    toast.success('Application submitted!');
   };
 
   const formatDate = (ts: string) =>

@@ -11,6 +11,7 @@ import {
   Star, Users, ExternalLink, MessageCircle, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -87,6 +88,7 @@ export default function SessionDetailPage() {
     await supabase.from('mentorship_sessions')
       .update({ status: 'completed', session_notes: notes.trim() || null })
       .eq('id', id);
+    toast.success('Session marked complete!');
     setSession((s) => s ? { ...s, status: 'completed', session_notes: notes.trim() || null } : s);
     setCompleting(false);
   };
@@ -99,12 +101,16 @@ export default function SessionDetailPage() {
       mentor_id: session!.mentor_id, rating, comment: comment.trim() || null,
     }).select('*').single();
     setReviewing(false);
-    if (data) setReview(data as MentorReview);
+    if (data) {
+      toast.success('Review submitted — thanks!');
+      setReview(data as MentorReview);
+    }
   };
 
   const handleCancel = async () => {
     if (!confirm('Cancel this session?')) return;
     await supabase.from('mentorship_sessions').update({ status: 'cancelled' }).eq('id', id);
+    toast.success('Session cancelled.');
     setSession((s) => s ? { ...s, status: 'cancelled' } : s);
   };
 

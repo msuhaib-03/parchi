@@ -9,6 +9,7 @@ import { Clock, CheckCircle, XCircle, Star, ExternalLink, Loader2, Inbox, Trophy
 import { AppNav } from '@/components/AppNav';
 import { Badge } from '@/components/ui/badge';
 import { SuccessStoryModal } from '@/components/SuccessStoryModal';
+import { toast } from 'sonner';
 
 const STATUS_META: Record<ReferralStatus, { label: string; variant: 'warning' | 'default' | 'destructive' | 'success'; icon: React.ReactNode }> = {
   pending:  { label: 'Pending',  variant: 'warning',     icon: <Clock size={11} /> },
@@ -105,8 +106,9 @@ export default function ReferralsPage() {
       .single();
 
     setUpdatingId(null);
-    if (uErr) { setError(uErr.message); return; }
+    if (uErr) { toast.error(uErr.message); return; }
     setRequests((prev) => prev.map((r) => r.id === id ? { ...r, ...data } : r));
+    toast.success(status === 'accepted' ? 'Request accepted.' : status === 'declined' ? 'Request declined.' : status === 'referred' ? 'Marked as referred!' : 'Status updated.');
   };
 
   const filtered = activeTab === 'all'

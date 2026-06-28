@@ -13,6 +13,7 @@ import {
   Sparkles, ChevronRight, XCircle, Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type TabId = 'browse' | 'requests' | 'sessions';
 
@@ -91,6 +92,7 @@ function ScheduleModal({
                    student:profiles!student_id(id, full_name, profile_picture_url)`).single();
     setSaving(false);
     if (error) { setErr(error.message); return; }
+    toast.success('Session booked! Check your Sessions tab for details.');
     onScheduled(data as unknown as MentorSession);
     onClose();
   };
@@ -168,6 +170,7 @@ function CompleteModal({ session, onClose, onCompleted }: {
     setSaving(true);
     await supabase.from('mentorship_sessions').update({ status: 'completed', session_notes: notes.trim() || null }).eq('id', session.id);
     setSaving(false);
+    toast.success('Session marked complete. Your mentee can now leave a review.');
     onCompleted(notes.trim());
     onClose();
   };
@@ -218,7 +221,11 @@ function ReviewModal({ session, onClose, onReviewed }: {
       mentor_id: session.mentor_id, rating, comment: comment.trim() || null,
     }).select('*').single();
     setSaving(false);
-    if (data) { onReviewed(data as MentorReview); onClose(); }
+    if (data) {
+      toast.success('Review submitted — thanks for helping other students!');
+      onReviewed(data as MentorReview);
+      onClose();
+    }
   };
 
   return (
@@ -279,6 +286,7 @@ function DeclineModal({ request, onClose, onDeclined }: {
     setSaving(true);
     await supabase.from('mentorship_requests').update({ status: 'declined', mentor_note: note.trim() || null }).eq('id', request.id);
     setSaving(false);
+    toast.success('Request declined.');
     onDeclined();
     onClose();
   };
@@ -443,25 +451,30 @@ function MentorshipInner() {
 
   // ── Mentor accept/decline/end actions ──────────────────────────────────────
   const acceptRequest = async (req: MentorshipRequest) => {
-    await supabase.from('mentorship_requests').update({ status: 'accepted' }).eq('id', req.id);
+    const { error } = await supabase.from('mentorship_requests').update({ status: 'accepted' }).eq('id', req.id);
+    if (error) { toast.error('Could not accept request. Try again.'); return; }
+    toast.success(`Mentorship with ${req.student?.full_name ?? 'student'} accepted! Schedule your first session.`);
     setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'accepted' } : r));
   };
 
   const endMentorship = async (req: MentorshipRequest) => {
     if (!confirm(`End mentorship with ${req.student?.full_name ?? 'this student'}? This cannot be undone.`)) return;
     await supabase.from('mentorship_requests').update({ status: 'ended' }).eq('id', req.id);
+    toast.success('Mentorship ended.');
     setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'ended' } : r));
   };
 
   const cancelRequest = async (req: MentorshipRequest) => {
     if (!confirm('Withdraw this request?')) return;
     await supabase.from('mentorship_requests').update({ status: 'cancelled' }).eq('id', req.id);
+    toast.success('Request withdrawn.');
     setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'cancelled' } : r));
   };
 
   const cancelSession = async (ses: MentorSession) => {
     if (!confirm('Cancel this session?')) return;
     await supabase.from('mentorship_sessions').update({ status: 'cancelled' }).eq('id', ses.id);
+    toast.success('Session cancelled.');
     setSessions((prev) => prev.map((s) => s.id === ses.id ? { ...s, status: 'cancelled' } : s));
   };
 

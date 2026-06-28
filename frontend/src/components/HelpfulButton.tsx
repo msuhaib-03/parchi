@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ThumbsUp, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Props {
   kind: 'experience' | 'resource';
@@ -49,6 +50,7 @@ export function HelpfulButton({ kind, targetId, userId, initialCount, initialMar
       // Revert on failure
       setMarked(!next);
       setCount((c) => Math.max(0, c + (next ? -1 : 1)));
+      toast.error('Could not save vote.');
     }
   };
 

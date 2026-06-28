@@ -11,6 +11,7 @@ import {
   Loader2, ArrowLeft, Building2, Briefcase, Tag, Layers, Calendar, Eye, EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -99,6 +100,7 @@ function NewExperienceInner() {
       const { error: upErr } = await supabase.from('interview_experiences').update(payload).eq('id', editId);
       setSubmitting(false);
       if (upErr) { setError(upErr.message); return; }
+      toast.success('Experience updated!');
       router.push(`/interview-prep/${editId}`);
     } else {
       const { data, error: insErr } = await supabase.from('interview_experiences')
@@ -106,6 +108,7 @@ function NewExperienceInner() {
         .select('id').single();
       setSubmitting(false);
       if (insErr || !data) { setError(insErr?.message ?? 'Could not save.'); return; }
+      toast.success('Experience published! Helping juniors walk in prepared.');
       router.push(`/interview-prep/${data.id}`);
     }
   };

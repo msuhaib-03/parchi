@@ -9,6 +9,7 @@ import { MENTOR_AREAS, SESSION_FORMAT_LABELS } from '@/types';
 import { AppNav } from '@/components/AppNav';
 import { Loader2, ArrowLeft, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -104,6 +105,7 @@ export default function BecomeMentorPage() {
     const { error: upsertErr } = await supabase.from('mentors').upsert(payload, { onConflict: 'id' });
     setSubmitting(false);
     if (upsertErr) { setError(upsertErr.message); return; }
+    toast.success(existing ? 'Mentor profile updated!' : 'Mentor profile published! Students can now find you.');
     setSuccess(true);
     setTimeout(() => router.push('/mentorship'), 1200);
   };

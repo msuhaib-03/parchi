@@ -12,6 +12,7 @@ import {
   CheckCircle2, Edit2, ExternalLink, MessageCircle, Video, MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -90,6 +91,7 @@ export default function MentorProfilePage() {
     });
     setSubmitting(false);
     if (error) { setFormError(error.message); return; }
+    toast.success(`Request sent to ${mentor?.full_name?.split(' ')[0] ?? 'mentor'}! You'll be notified when they respond.`);
     setRequested(true);
     setShowForm(false);
   };

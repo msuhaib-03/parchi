@@ -13,6 +13,7 @@ import {
   GitBranch, Globe, BadgeCheck, BookOpen, Mail,
 } from 'lucide-react';
 import { AppNav } from '@/components/AppNav';
+import { toast } from 'sonner';
 import { ProfileCompletionCard } from '@/components/ProfileCompletionCard';
 import { calculateCompletion } from '@/lib/profileCompletion';
 import { cn } from '@/lib/utils';
@@ -82,6 +83,8 @@ export default function ProfilePage() {
         '⚠️ Email preferences need a one-time DB migration. ' +
         'Run supabase/weekly_digest_migration.sql in Supabase → SQL Editor, then try again.'
       );
+    } else {
+      toast.success(next ? 'Weekly digest enabled.' : 'Weekly digest disabled.');
     }
   };
 
@@ -184,6 +187,7 @@ export default function ProfilePage() {
     setProfile(final);
     setForm(final);
     setIsEditing(false);
+    toast.success('Profile saved!');
   };
 
   const handleCancel = () => {

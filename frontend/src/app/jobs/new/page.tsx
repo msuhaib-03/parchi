@@ -11,6 +11,7 @@ import {
   Loader2, ArrowLeft, Building2, Briefcase,
   MapPin, Link2, Mail, Tag, Calendar,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const inputCls =
   'w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm ' +
@@ -110,6 +111,7 @@ export default function PostJobPage() {
 
     setSubmitting(false);
     if (insertError) { setError(insertError.message); return; }
+    toast.success('Job posted!');
     router.push('/jobs');
   };
 
