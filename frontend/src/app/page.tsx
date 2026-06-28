@@ -140,19 +140,63 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Community Logos ─────────────────────────────────────────────────── */}
-      <section className="py-14 px-4 bg-white dark:bg-zinc-950 transition-colors">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-10">
-            Part of the MAJU community
-          </p>
-          <div className="flex items-center justify-center gap-12 flex-wrap">
-            <Image src="/logos/maju.png" alt="Muhammad Ali Jinnah University" width={72} height={72}
-              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
-            <Image src="/logos/ieee.png" alt="IEEE" width={100} height={50}
-              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
-            <Image src="/logos/acm.png" alt="ACM" width={120} height={50}
-              className="opacity-40 dark:opacity-20 hover:opacity-80 dark:hover:opacity-50 transition-opacity duration-200 object-contain" />
+      {/* ─── Community ───────────────────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white dark:bg-zinc-950 transition-colors">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">
+              Part of the MAJU community
+            </p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-zinc-50 mb-4 tracking-tight">
+              Rooted in the ecosystem you&apos;re already in
+            </h2>
+            <p className="text-slate-500 dark:text-zinc-400 max-w-lg mx-auto text-sm leading-relaxed">
+              The same students at MAJU&apos;s IEEE talks, ACM events, and annual tech conferences —
+              now connected with their alumni, in one place.
+            </p>
+          </div>
+
+          {/* Logo cards */}
+          <div className="flex items-stretch justify-center gap-5 flex-wrap mb-14">
+            <CommunityCard
+              href="https://jinnah.edu"
+              logo="/logos/maju.png"
+              alt="Muhammad Ali Jinnah University"
+              name="MAJU"
+              desc="Mohammad Ali Jinnah University — 25+ years of academic excellence in Karachi"
+              logoW={68} logoH={68}
+            />
+            <CommunityCard
+              href="https://khihtc.maju.edu.pk/"
+              logo="/logos/ieee.png"
+              alt="IEEE"
+              name="IEEE @ MAJU"
+              desc="Karachi Humanitarian Technology Conference & student chapter on campus"
+              logoW={90} logoH={44}
+            />
+            <CommunityCard
+              href="https://jinnah.edu/societies-clubs/"
+              logo="/logos/acm.png"
+              alt="ACM"
+              name="ACM Chapter"
+              desc="International scholarships, 250+ speaker lectures & co-curricular development"
+              logoW={76} logoH={44}
+            />
+          </div>
+
+          {/* Stats strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-100 dark:border-zinc-800 pt-12">
+            {[
+              { stat: '25+',      label: 'Years of university excellence' },
+              { stat: '6',        label: 'Active student societies & clubs' },
+              { stat: 'IEEE · ACM', label: 'International chapters on campus' },
+              { stat: 'KHI-HTC', label: 'Annual humanitarian tech conference' },
+            ].map(({ stat, label }) => (
+              <div key={label} className="text-center">
+                <p className="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight">{stat}</p>
+                <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1 leading-relaxed">{label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -227,5 +271,23 @@ function TrustCard({ icon, title, desc }: { icon: React.ReactNode; title: string
         <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">{desc}</p>
       </div>
     </div>
+  );
+}
+
+function CommunityCard({ href, logo, alt, name, desc, logoW, logoH }: {
+  href: string; logo: string; alt: string; name: string; desc: string; logoW: number; logoH: number;
+}) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      className="group flex flex-col items-center text-center p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-none hover:-translate-y-0.5 transition-all duration-300 w-52">
+      <div className="h-16 flex items-center justify-center mb-4">
+        <Image
+          src={logo} alt={alt} width={logoW} height={logoH}
+          className="object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+        />
+      </div>
+      <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-1.5">{name}</p>
+      <p className="text-xs text-slate-400 dark:text-zinc-500 leading-relaxed">{desc}</p>
+    </a>
   );
 }
