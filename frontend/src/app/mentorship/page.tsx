@@ -83,7 +83,7 @@ function ScheduleModal({
     const { data, error } = await supabase.from('mentorship_sessions').insert({
       request_id:    reqId,
       mentor_id:     req.mentor_id,
-      student_id:    me.id,
+      student_id:    req.student_id,
       scheduled_at:  new Date(dateTime).toISOString(),
       duration_mins: duration,
       agenda:        agenda.trim(),

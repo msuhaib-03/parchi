@@ -103,13 +103,14 @@ ALTER TABLE mentorship_sessions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "ms_select_parties" ON mentorship_sessions;
 DROP POLICY IF EXISTS "ms_insert_student" ON mentorship_sessions;
+DROP POLICY IF EXISTS "ms_insert_mentor"  ON mentorship_sessions;
 DROP POLICY IF EXISTS "ms_update_mentor"  ON mentorship_sessions;
 DROP POLICY IF EXISTS "ms_update_student" ON mentorship_sessions;
 
 CREATE POLICY "ms_select_parties" ON mentorship_sessions FOR SELECT TO authenticated
   USING (auth.uid() = student_id OR auth.uid() = mentor_id);
 
--- Students book sessions against accepted requests only
+-- Either party can book sessions against their accepted requests
 CREATE POLICY "ms_insert_student" ON mentorship_sessions FOR INSERT TO authenticated
   WITH CHECK (
     auth.uid() = student_id AND
@@ -117,6 +118,17 @@ CREATE POLICY "ms_insert_student" ON mentorship_sessions FOR INSERT TO authentic
       SELECT 1 FROM mentorship_requests r
       WHERE r.id = request_id
         AND r.student_id = auth.uid()
+        AND r.status = 'accepted'
+    )
+  );
+
+CREATE POLICY "ms_insert_mentor" ON mentorship_sessions FOR INSERT TO authenticated
+  WITH CHECK (
+    auth.uid() = mentor_id AND
+    EXISTS (
+      SELECT 1 FROM mentorship_requests r
+      WHERE r.id = request_id
+        AND r.mentor_id = auth.uid()
         AND r.status = 'accepted'
     )
   );
