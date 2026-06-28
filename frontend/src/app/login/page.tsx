@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const inputCls = 'w-full py-3 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent';
 
@@ -38,6 +39,7 @@ export default function LoginPage() {
       return;
     }
 
+    toast.success('Welcome back!');
     router.push('/dashboard');
     router.refresh();
   };

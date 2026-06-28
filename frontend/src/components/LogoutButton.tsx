@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LogOut, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,7 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     setLoading(true);
     await supabase.auth.signOut();
+    toast.success('Logged out. See you soon!');
     router.push('/');
   };
 
