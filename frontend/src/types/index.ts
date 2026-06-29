@@ -364,6 +364,48 @@ export function extractIdFromEmail(email: string): string | null {
   return `${match[1]}${match[2]}-${match[3]}-${match[4]}`;
 }
 
+// ─── Parchi Score ─────────────────────────────────────────────────────────────
+
+export type ParchiTier = 'newcomer' | 'contributor' | 'connector' | 'champion' | 'legend';
+
+export interface ParchiScoreEntry {
+  id:                  string;
+  full_name:           string;
+  role:                string;
+  department:          string;
+  batch_year:          number;
+  profile_picture_url: string | null;
+  current_company:     string | null;
+  job_title:           string | null;
+  parchi_score:        number;
+  profile_pts:         number;
+  referral_pts:        number;
+  job_pts:             number;
+  session_pts:         number;
+  salary_pts:          number;
+  story_pts:           number;
+}
+
+export function getParchiTier(score: number): ParchiTier {
+  if (score >= 800) return 'legend';
+  if (score >= 400) return 'champion';
+  if (score >= 150) return 'connector';
+  if (score >= 50)  return 'contributor';
+  return 'newcomer';
+}
+
+export const PARCHI_TIER_CONFIG: Record<ParchiTier, {
+  label: string; emoji: string;
+  color: string; bg: string; border: string;
+  minScore: number; nextScore: number | null;
+}> = {
+  newcomer:    { label: 'Newcomer',    emoji: '🌱', color: 'text-slate-500 dark:text-zinc-400',   bg: 'bg-slate-100 dark:bg-zinc-800',          border: 'border-slate-200 dark:border-zinc-700', minScore: 0,   nextScore: 50  },
+  contributor: { label: 'Contributor', emoji: '🥉', color: 'text-amber-700 dark:text-amber-400',  bg: 'bg-amber-50 dark:bg-amber-950/40',       border: 'border-amber-200 dark:border-amber-800', minScore: 50,  nextScore: 150 },
+  connector:   { label: 'Connector',   emoji: '🥈', color: 'text-sky-700 dark:text-sky-400',      bg: 'bg-sky-50 dark:bg-sky-950/40',           border: 'border-sky-200 dark:border-sky-800',    minScore: 150, nextScore: 400 },
+  champion:    { label: 'Champion',    emoji: '🥇', color: 'text-yellow-700 dark:text-yellow-400',bg: 'bg-yellow-50 dark:bg-yellow-950/40',     border: 'border-yellow-200 dark:border-yellow-800',minScore: 400, nextScore: 800 },
+  legend:      { label: 'Legend',      emoji: '👑', color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40',     border: 'border-purple-200 dark:border-purple-800',minScore: 800, nextScore: null },
+};
+
 // ─── Salary Insights ──────────────────────────────────────────────────────────
 
 export type SalaryRoleLevel    = 'intern' | 'junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'director';

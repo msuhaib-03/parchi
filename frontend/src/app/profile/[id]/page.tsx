@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
-import { DEPARTMENTS, validateMajuId } from '@/types';
+import { DEPARTMENTS, validateMajuId, getParchiTier, PARCHI_TIER_CONFIG } from '@/types';
 import {
   Edit2, Save, X, Briefcase, Link2,
   GraduationCap, Building2, CheckCircle, Plus,
@@ -38,6 +38,8 @@ export default function ProfilePage() {
   const [idError, setIdError]         = useState('');
   const [skillInput, setSkillInput]   = useState('');
 
+  const [parchiScore, setParchiScore] = useState<number | null>(null);
+
   // Weekly digest email preference — instant-save toggle (independent of edit mode)
   const [digestPref, setDigestPref]   = useState(true);
   const [savingPref, setSavingPref]   = useState(false);
@@ -62,6 +64,11 @@ export default function ProfilePage() {
       setProfile(data as Profile);
       setForm(data as Profile);
       setDigestPref((data as Profile).email_weekly_digest ?? true);
+
+      const { data: scoreRow } = await supabase
+        .from('parchi_scores').select('parchi_score').eq('id', id).maybeSingle();
+      if (scoreRow) setParchiScore(scoreRow.parchi_score);
+
       setLoading(false);
     })();
   }, [id, supabase, router]);
@@ -331,6 +338,17 @@ export default function ProfilePage() {
                 {isAlumni ? <Briefcase size={11} /> : isTeacher ? <BookOpen size={11} /> : <GraduationCap size={11} />}
                 {isAlumni ? 'Alumni' : isTeacher ? 'Faculty' : 'Student'}
               </span>
+
+              {/* Parchi Score tier badge */}
+              {!isEditing && parchiScore !== null && (() => {
+                const tier = getParchiTier(parchiScore);
+                const cfg  = PARCHI_TIER_CONFIG[tier];
+                return (
+                  <Link href="/leaderboard" className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full mt-1.5 border transition-opacity hover:opacity-80 ${cfg.color} ${cfg.bg} ${cfg.border}`}>
+                    {cfg.emoji} {cfg.label} · {parchiScore} pts
+                  </Link>
+                );
+              })()}
 
               {/* ── Alumni / Teacher work info ─────────────────────────── */}
               {isAlumniOrTeacher && (
