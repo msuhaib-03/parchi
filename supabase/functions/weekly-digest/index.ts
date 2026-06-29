@@ -72,6 +72,7 @@ interface DigestModel {
   alumni: { name: string; sub: string }[];
   pendingReferrals: number;
   profileNudge?: string;
+  salaryStats?: { newThisWeek: number; totalCount: number; medianPkr: number };
 }
 
 interface GlobalData {
@@ -79,9 +80,10 @@ interface GlobalData {
   stories: { is_anonymous: boolean; company: string; role: string; user_name?: string; user_dept?: string }[];
   alumni: any[];
   pendingByAlumni: Record<string, number>;
+  salaryEntries: { monthly_salary_pkr: number; created_at: string }[];
 }
 
-function buildModel(u: any, data: GlobalData): DigestModel {
+function buildModel(u: any, data: GlobalData, windowStart: string): DigestModel {
   const firstName = String(u.full_name || 'there').split(' ')[0];
   const isStudent = u.role === 'student';
   const isAlumni  = u.role === 'alumni';
@@ -125,8 +127,18 @@ function buildModel(u: any, data: GlobalData): DigestModel {
   else if ((u.bio?.trim().length ?? 0) < 50)             profileNudge = 'Add a short bio — complete profiles get up to 3× more responses.';
   else if (!u.linkedin_url)                              profileNudge = 'Connect your LinkedIn to build credibility with alumni.';
 
+  // Salary stats — show section when there's enough data (3+ total) or new submissions this week.
+  let salaryStats: DigestModel['salaryStats'];
+  if (data.salaryEntries.length >= 3 || data.salaryEntries.some((e) => e.created_at >= windowStart)) {
+    const sorted = [...data.salaryEntries].map((e) => e.monthly_salary_pkr).sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const medianPkr = sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid];
+    const newThisWeek = data.salaryEntries.filter((e) => e.created_at >= windowStart).length;
+    salaryStats = { newThisWeek, totalCount: data.salaryEntries.length, medianPkr };
+  }
+
   const matchedJobCount = jobs.filter((j) => j.matched.length > 0).length;
-  const itemsCount = jobs.length + stories.length + alumni.length;
+  const itemsCount = jobs.length + stories.length + alumni.length + (salaryStats ? 1 : 0);
   const hasContent = itemsCount > 0 || pendingReferrals > 0;
 
   let subject: string;
@@ -137,7 +149,7 @@ function buildModel(u: any, data: GlobalData): DigestModel {
   else                                    subject = `What’s new at Parchi this week`;
 
   return { firstName, isStudent, isAlumni, subject, hasContent, itemsCount, matchedJobCount,
-    jobs, stories, alumni, pendingReferrals, profileNudge };
+    jobs, stories, alumni, pendingReferrals, profileNudge, salaryStats };
 }
 
 // ── HTML email (inline styles, table layout — email-client safe) ──────────────
@@ -183,6 +195,30 @@ function buildHtml(m: DigestModel, unsubUrl: string): string {
       </div>
     </td></tr>` : '';
 
+  const fmtPKR = (n: number) => n >= 100000 ? `PKR ${(n / 100000).toFixed(1).replace(/\.0$/, '')}L` : `PKR ${Math.round(n / 1000)}K`;
+
+  const salaryBlock = m.salaryStats ? (() => {
+    const { newThisWeek, totalCount, medianPkr } = m.salaryStats!;
+    const badge = newThisWeek > 0
+      ? `<span style="background:#7c3aed;color:#fff;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;">+${newThisWeek} this week</span>`
+      : '';
+    return `
+    <tr><td style="padding:22px 28px 0;">
+      <div style="font-size:13px;font-weight:700;color:${BRAND};text-transform:uppercase;letter-spacing:.04em;">💰 Salary Insights</div>
+      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:14px;padding:18px;margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:26px;font-weight:800;color:#1e1b4b;line-height:1;">${fmtPKR(medianPkr)}<span style="font-size:14px;font-weight:500;color:#6d28d9;">/mo</span></div>
+            <div style="font-size:13px;color:#6d28d9;margin-top:4px;">Market median · ${totalCount} anonymous submission${totalCount !== 1 ? 's' : ''}</div>
+          </div>
+          ${badge}
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:#5b21b6;line-height:1.5;">See what MAJU alumni and students are earning — by role, level, and company. All anonymous.</div>
+        <a href="${APP_URL}/salary" style="display:inline-block;margin-top:10px;color:${BRAND};font-size:13px;font-weight:600;text-decoration:none;">Browse salary data →</a>
+      </div>
+    </td></tr>`;
+  })() : '';
+
   const nudgeBlock = m.profileNudge ? `
     <tr><td style="padding:22px 28px 0;">
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px 16px;color:#92400e;font-size:13px;line-height:1.5;">
@@ -211,6 +247,7 @@ function buildHtml(m: DigestModel, unsubUrl: string): string {
 
         ${pendingBlock}
         ${section(jobsHeading, jobRows, 'See all jobs', `${APP_URL}/jobs`)}
+        ${salaryBlock}
         ${section('🏆 Success stories', storyRows, 'Read stories', `${APP_URL}/stories`)}
         ${section('🎓 New alumni to connect with', alumniRows, 'Browse alumni', `${APP_URL}/alumni`)}
         ${nudgeBlock}
@@ -276,7 +313,7 @@ Deno.serve(async (req) => {
   const storyWindow = new Date(now.getTime() - 14 * 864e5).toISOString(); // stories are rarer → wider window
 
   // ── Global "what's new" (one set of queries, reused for every recipient) ───
-  const [{ data: jobs }, { data: storiesRaw }, { data: alumni }, { data: pending }] = await Promise.all([
+  const [{ data: jobs }, { data: storiesRaw }, { data: alumni }, { data: pending }, { data: salaryRaw }] = await Promise.all([
     admin.from('jobs')
       .select('id, title, company, job_type, location, is_remote, tags, created_at')
       .eq('is_active', true).gte('created_at', windowStart)
@@ -289,6 +326,7 @@ Deno.serve(async (req) => {
       .eq('role', 'alumni').gte('created_at', windowStart)
       .order('created_at', { ascending: false }).limit(8),
     admin.from('referral_requests').select('alumni_id').eq('status', 'pending'),
+    admin.from('salary_entries').select('monthly_salary_pkr, created_at'),
   ]);
 
   const pendingByAlumni: Record<string, number> = {};
@@ -299,7 +337,8 @@ Deno.serve(async (req) => {
     return { is_anonymous: s.is_anonymous, company: s.company, role: s.role, user_name: u?.full_name, user_dept: u?.department };
   });
 
-  const data: GlobalData = { jobs: jobs ?? [], stories, alumni: alumni ?? [], pendingByAlumni };
+  const salaryEntries = (salaryRaw ?? []) as { monthly_salary_pkr: number; created_at: string }[];
+  const data: GlobalData = { jobs: jobs ?? [], stories, alumni: alumni ?? [], pendingByAlumni, salaryEntries };
 
   // ── Recipients ─────────────────────────────────────────────────────────────
   let recipients: any[];
@@ -327,7 +366,7 @@ Deno.serve(async (req) => {
       if (prior?.length) { skipped++; continue; }
     }
 
-    const model = buildModel(u, data);
+    const model = buildModel(u, data, windowStart);
     // Don't spam users with an empty digest — but in test mode always send so the
     // template/pipeline can be verified even during a quiet week.
     if (!model.hasContent && !testEmail) {
