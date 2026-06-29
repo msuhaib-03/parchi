@@ -7,7 +7,7 @@ import {
   Menu, X, LayoutDashboard, Users, Briefcase,
   MessageCircle, User, LogOut, Loader2, Building2,
   Bell, BriefcaseBusiness, Trophy, CheckCircle2, XCircle,
-  ChevronDown, ClipboardList, GraduationCap, UserCheck, UserX, CalendarClock, TrendingUp, Medal,
+  ChevronDown, ClipboardList, GraduationCap, UserCheck, UserX, CalendarClock, TrendingUp, Medal, CalendarDays,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
@@ -35,6 +35,8 @@ function getNotifMeta(type: string): { Icon: React.ElementType; bg: string; fg: 
     case 'mentorship_accepted': return { Icon: UserCheck,     bg: 'bg-emerald-100 dark:bg-emerald-900/40',fg: 'text-emerald-600 dark:text-emerald-400' };
     case 'mentorship_declined': return { Icon: UserX,         bg: 'bg-red-100 dark:bg-red-900/40',        fg: 'text-red-500 dark:text-red-400'         };
     case 'session_booked':      return { Icon: CalendarClock, bg: 'bg-indigo-100 dark:bg-indigo-900/40',  fg: 'text-indigo-600 dark:text-indigo-400'   };
+    case 'event_created':       return { Icon: CalendarDays,  bg: 'bg-rose-100 dark:bg-rose-900/40',      fg: 'text-rose-600 dark:text-rose-400'       };
+    case 'event_reminder':      return { Icon: CalendarDays,  bg: 'bg-orange-100 dark:bg-orange-900/40',  fg: 'text-orange-600 dark:text-orange-400'   };
     default:                    return { Icon: Bell,           bg: 'bg-slate-100 dark:bg-zinc-800',        fg: 'text-slate-500 dark:text-zinc-400'      };
   }
 }
@@ -49,6 +51,7 @@ const PRIMARY_NAV = [
 
 // Secondary links live inside the "More" dropdown on desktop
 const MORE_NAV = [
+  { href: '/events',         label: 'Events',          icon: CalendarDays },
   { href: '/referrals',      label: 'Referrals',       icon: BriefcaseBusiness },
   { href: '/jobs',           label: 'Jobs',            icon: Building2 },
   { href: '/salary',         label: 'Salary Insights', icon: TrendingUp },

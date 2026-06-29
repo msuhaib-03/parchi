@@ -73,6 +73,7 @@ interface DigestModel {
   pendingReferrals: number;
   profileNudge?: string;
   salaryStats?: { newThisWeek: number; totalCount: number; medianPkr: number };
+  upcomingEvents: { id: string; title: string; eventType: string; startsAt: string; isOnline: boolean; location?: string; organizer?: string }[];
 }
 
 interface GlobalData {
@@ -81,6 +82,7 @@ interface GlobalData {
   alumni: any[];
   pendingByAlumni: Record<string, number>;
   salaryEntries: { monthly_salary_pkr: number; created_at: string }[];
+  upcomingEvents: { id: string; title: string; event_type: string; starts_at: string; is_online: boolean; location?: string; organizer?: string }[];
 }
 
 function buildModel(u: any, data: GlobalData, windowStart: string): DigestModel {
@@ -137,8 +139,14 @@ function buildModel(u: any, data: GlobalData, windowStart: string): DigestModel 
     salaryStats = { newThisWeek, totalCount: data.salaryEntries.length, medianPkr };
   }
 
+  const upcomingEvents = data.upcomingEvents.slice(0, 3).map((e) => ({
+    id: e.id, title: e.title, eventType: e.event_type,
+    startsAt: e.starts_at, isOnline: e.is_online,
+    location: e.location, organizer: e.organizer,
+  }));
+
   const matchedJobCount = jobs.filter((j) => j.matched.length > 0).length;
-  const itemsCount = jobs.length + stories.length + alumni.length + (salaryStats ? 1 : 0);
+  const itemsCount = jobs.length + stories.length + alumni.length + (salaryStats ? 1 : 0) + upcomingEvents.length;
   const hasContent = itemsCount > 0 || pendingReferrals > 0;
 
   let subject: string;
@@ -149,7 +157,7 @@ function buildModel(u: any, data: GlobalData, windowStart: string): DigestModel 
   else                                    subject = `What’s new at Parchi this week`;
 
   return { firstName, isStudent, isAlumni, subject, hasContent, itemsCount, matchedJobCount,
-    jobs, stories, alumni, pendingReferrals, profileNudge, salaryStats };
+    jobs, stories, alumni, pendingReferrals, profileNudge, salaryStats, upcomingEvents };
 }
 
 // ── HTML email (inline styles, table layout — email-client safe) ──────────────
@@ -219,6 +227,32 @@ function buildHtml(m: DigestModel, unsubUrl: string): string {
     </td></tr>`;
   })() : '';
 
+  const EVENT_EMOJI: Record<string, string> = {
+    workshop: '🛠️', seminar: '🎤', competition: '🏆', networking: '🤝',
+    career_fair: '💼', club_event: '🎭', hackathon: '💻', sports: '⚽', other: '📅',
+  };
+
+  const fmtDigestDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-PK', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const eventsBlock = m.upcomingEvents.length > 0 ? (() => {
+    const rows = m.upcomingEvents.map((e) => `
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${LINE};">
+        <div style="font-weight:600;color:${INK};font-size:14px;line-height:1.3;">
+          ${EVENT_EMOJI[e.eventType] ?? '📅'} <a href="${APP_URL}/events/${esc(e.id)}" style="color:${INK};text-decoration:none;">${esc(e.title)}</a>
+        </div>
+        <div style="color:${SUB};font-size:12px;margin-top:3px;">${fmtDigestDate(e.startsAt)}${e.isOnline ? ' · Online' : (e.location ? ' · ' + esc(e.location) : '')}${e.organizer ? ' · ' + esc(e.organizer) : ''}</div>
+      </td></tr>`).join('');
+    return `
+    <tr><td style="padding:22px 28px 0;">
+      <div style="font-size:13px;font-weight:700;color:${BRAND};text-transform:uppercase;letter-spacing:.04em;">📅 Upcoming Events</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">${rows}</table>
+      <a href="${APP_URL}/events" style="display:inline-block;margin-top:10px;color:${BRAND};font-size:13px;font-weight:600;text-decoration:none;">See all events →</a>
+    </td></tr>`;
+  })() : '';
+
   const nudgeBlock = m.profileNudge ? `
     <tr><td style="padding:22px 28px 0;">
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px 16px;color:#92400e;font-size:13px;line-height:1.5;">
@@ -248,6 +282,7 @@ function buildHtml(m: DigestModel, unsubUrl: string): string {
         ${pendingBlock}
         ${section(jobsHeading, jobRows, 'See all jobs', `${APP_URL}/jobs`)}
         ${salaryBlock}
+        ${eventsBlock}
         ${section('🏆 Success stories', storyRows, 'Read stories', `${APP_URL}/stories`)}
         ${section('🎓 New alumni to connect with', alumniRows, 'Browse alumni', `${APP_URL}/alumni`)}
         ${nudgeBlock}
@@ -313,7 +348,9 @@ Deno.serve(async (req) => {
   const storyWindow = new Date(now.getTime() - 14 * 864e5).toISOString(); // stories are rarer → wider window
 
   // ── Global "what's new" (one set of queries, reused for every recipient) ───
-  const [{ data: jobs }, { data: storiesRaw }, { data: alumni }, { data: pending }, { data: salaryRaw }] = await Promise.all([
+  const weekAhead = new Date(now.getTime() + 7 * 864e5).toISOString();
+
+  const [{ data: jobs }, { data: storiesRaw }, { data: alumni }, { data: pending }, { data: salaryRaw }, { data: eventsRaw }] = await Promise.all([
     admin.from('jobs')
       .select('id, title, company, job_type, location, is_remote, tags, created_at')
       .eq('is_active', true).gte('created_at', windowStart)
@@ -327,6 +364,13 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: false }).limit(8),
     admin.from('referral_requests').select('alumni_id').eq('status', 'pending'),
     admin.from('salary_entries').select('monthly_salary_pkr, created_at'),
+    admin.from('events')
+      .select('id, title, event_type, starts_at, is_online, location, organizer')
+      .eq('is_active', true)
+      .gte('starts_at', now.toISOString())
+      .lte('starts_at', weekAhead)
+      .order('starts_at', { ascending: true })
+      .limit(5),
   ]);
 
   const pendingByAlumni: Record<string, number> = {};
@@ -338,7 +382,8 @@ Deno.serve(async (req) => {
   });
 
   const salaryEntries = (salaryRaw ?? []) as { monthly_salary_pkr: number; created_at: string }[];
-  const data: GlobalData = { jobs: jobs ?? [], stories, alumni: alumni ?? [], pendingByAlumni, salaryEntries };
+  const upcomingEvents = (eventsRaw ?? []) as GlobalData['upcomingEvents'];
+  const data: GlobalData = { jobs: jobs ?? [], stories, alumni: alumni ?? [], pendingByAlumni, salaryEntries, upcomingEvents };
 
   // ── Recipients ─────────────────────────────────────────────────────────────
   let recipients: any[];

@@ -16,7 +16,9 @@ export type NotificationType =
   | 'mentorship_request'
   | 'mentorship_accepted'
   | 'mentorship_declined'
-  | 'session_booked';
+  | 'session_booked'
+  | 'event_created'
+  | 'event_reminder';
 export type PostType = 'blog' | 'paper' | 'announcement';
 
 export interface Profile {
@@ -362,6 +364,59 @@ export function extractIdFromEmail(email: string): string | null {
   const match = local.match(/^(FA|SP)(\d{2})([A-Z]+)(\d{3,4})$/);
   if (!match) return null;
   return `${match[1]}${match[2]}-${match[3]}-${match[4]}`;
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+export type EventType = 'career_fair' | 'workshop' | 'networking' | 'competition' | 'seminar' | 'webinar' | 'meetup' | 'other';
+
+export interface Event {
+  id:             string;
+  created_by:     string;
+  title:          string;
+  description:    string;
+  event_type:     EventType;
+  is_online:      boolean;
+  location?:      string | null;
+  starts_at:      string;
+  ends_at?:       string | null;
+  max_attendees?: number | null;
+  cover_url?:     string | null;
+  organizer?:     string | null;
+  tags?:          string[] | null;
+  is_active:      boolean;
+  created_at:     string;
+  updated_at:     string;
+  creator?:       Pick<Profile, 'id' | 'full_name' | 'role'> | null;
+  event_rsvps?:   { user_id: string; status: string }[];
+}
+
+export interface EventRsvp {
+  id:         string;
+  event_id:   string;
+  user_id:    string;
+  status:     'going' | 'maybe' | 'not_going';
+  created_at: string;
+  user?:      Pick<Profile, 'id' | 'full_name' | 'profile_picture_url' | 'department'> | null;
+}
+
+export const EVENT_TYPE_META: Record<EventType, { label: string; emoji: string }> = {
+  career_fair:  { label: 'Career Fair',  emoji: '🏢' },
+  workshop:     { label: 'Workshop',     emoji: '🛠️' },
+  networking:   { label: 'Networking',   emoji: '🤝' },
+  competition:  { label: 'Competition',  emoji: '🏆' },
+  seminar:      { label: 'Seminar',      emoji: '📚' },
+  webinar:      { label: 'Webinar',      emoji: '💻' },
+  meetup:       { label: 'Alumni Meetup',emoji: '🎓' },
+  other:        { label: 'Event',        emoji: '📅' },
+};
+
+export function fmtEventDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+export function fmtEventTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── Parchi Score ─────────────────────────────────────────────────────────────
