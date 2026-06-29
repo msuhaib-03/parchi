@@ -74,17 +74,17 @@ export default function SetupPage() {
 
     if (needsMajuId) {
       if (!form.student_id.trim()) {
-        setError('MAJU ID is required when signing up with a Gmail address. Format: FA22-BSCS-0114');
+        setError('MAJU ID is required when signing up with a Gmail address. Format: PREFIX-DEPT-NUMBER (e.g. FA22-MSCS-0012)');
         return;
       }
       if (!validateMajuId(form.student_id)) {
-        setError('Invalid MAJU ID format. Expected: FA22-BSCS-0114');
+        setError('Invalid MAJU ID format. Expected PREFIX-DEPT-NUMBER, e.g. FA22-MSCS-0012');
         return;
       }
     }
 
     if (!isStudent && form.student_id.trim() && !validateMajuId(form.student_id)) {
-      setError('Invalid MAJU ID format. Expected: FA22-BSCS-0114');
+      setError('Invalid MAJU ID format. Expected PREFIX-DEPT-NUMBER, e.g. FA22-MSCS-0012');
       return;
     }
 
@@ -190,7 +190,7 @@ export default function SetupPage() {
                   <input type="text"
                     value={form.student_id}
                     onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value.toUpperCase() }))}
-                    placeholder="FA22-BSCS-0114"
+                    placeholder="e.g. FA22-MSCS-0012"
                     required={needsMajuId}
                     className={`${inputCls} pl-10 font-mono tracking-wide`} />
                 </div>

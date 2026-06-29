@@ -340,18 +340,10 @@ export interface JobFormData {
 
 // ─── MAJU ID validation ───────────────────────────────────────────────────────
 
-const DEPT_CODES = [
-  'BSCS', 'BSSE', 'BBA', 'BSIT', 'BSCE', 'BSEE', 'BSAI', 'BSCYS',
-  'BS', 'MS', 'MBA', 'PHD', 'MCS', 'MIT', 'MCM',
-  'BSBA', 'BSAF', 'BSPS', 'BSBI',
-].join('|');
+// Accepts any PREFIX-DEPT-NUMBER format: FA22-BSCS-0114, SP21-MSCS-001, EMP-CS-007, etc.
+const MAJU_ID_REGEX = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i;
 
-const MAJU_ID_REGEX = new RegExp(
-  `^(FA|SP)\\d{2}-(${DEPT_CODES})[A-Z]*-\\d{3,4}$`,
-  'i'
-);
-
-/** Validate MAJU student/alumni ID format loosely, e.g. FA22-BSCS-0114 */
+/** Validate MAJU ID format loosely — PREFIX-DEPT-NUMBER, any department or prefix */
 export function validateMajuId(id: string): boolean {
   return MAJU_ID_REGEX.test(id.trim());
 }

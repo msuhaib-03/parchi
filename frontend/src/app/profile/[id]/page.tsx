@@ -690,7 +690,7 @@ export default function ProfilePage() {
                       setForm((f) => ({ ...f, student_id: e.target.value }));
                       setIdError('');
                     }}
-                    placeholder={isAlumni ? 'e.g. FA19-BSCS-0047' : 'e.g. FA22-BSCS-0114'}
+                    placeholder={isAlumni ? 'e.g. FA19-MSCS-0047' : 'e.g. FA22-MSCS-0012'}
                     className={cn(
                       inputCls, 'pl-9 font-mono',
                       idError ? 'border-red-300 dark:border-red-700 ring-1 ring-red-200 dark:ring-red-800' : ''

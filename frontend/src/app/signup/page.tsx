@@ -101,18 +101,18 @@ export default function SignupPage() {
     // MAJU ID validation for alumni/teachers using Gmail (mandatory)
     if (needsMajuId) {
       if (!form.student_id.trim()) {
-        setError('MAJU ID is required when signing up with a Gmail address. Format: FA22-BSCS-0114');
+        setError('MAJU ID is required when signing up with a Gmail address. Format: PREFIX-DEPT-NUMBER (e.g. FA22-MSCS-0012)');
         return;
       }
       if (!validateMajuId(form.student_id)) {
-        setError('Invalid MAJU ID format. Expected: FA22-BSCS-0114 (prefix-dept-number).');
+        setError('Invalid MAJU ID format. Expected PREFIX-DEPT-NUMBER, e.g. FA22-MSCS-0012');
         return;
       }
     }
 
     // Optional MAJU ID for @maju.edu.pk / @jinnah.edu alumni/teachers — still validate format if provided
     if (!isStudent && form.student_id.trim() && !validateMajuId(form.student_id)) {
-      setError('Invalid MAJU ID format. Expected: FA22-BSCS-0114');
+      setError('Invalid MAJU ID format. Expected PREFIX-DEPT-NUMBER, e.g. FA22-MSCS-0012');
       return;
     }
 
@@ -286,7 +286,7 @@ export default function SignupPage() {
                     type="text"
                     value={form.student_id}
                     onChange={(e) => update('student_id', e.target.value.toUpperCase())}
-                    placeholder="FA22-BSCS-0114"
+                    placeholder="e.g. FA22-MSCS-0012"
                     required={needsMajuId}
                     className={`${inputCls} pl-10 pr-4 font-mono tracking-wide`}
                   />
