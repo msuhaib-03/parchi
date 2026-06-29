@@ -16,8 +16,8 @@ const inputCls =
 
 type Role = 'student' | 'alumni' | 'teacher';
 
+// Students are not allowed to sign up via Google OAuth — email + password only.
 const ROLES: { value: Role; label: string; icon: React.ElementType; desc: string }[] = [
-  { value: 'student', label: 'Student',  icon: GraduationCap, desc: 'Currently enrolled at MAJU' },
   { value: 'alumni',  label: 'Alumni',   icon: Briefcase,     desc: 'Graduated from MAJU' },
   { value: 'teacher', label: 'Teacher',  icon: BookOpen,      desc: 'Faculty at MAJU / SZABIST' },
 ];
@@ -32,7 +32,7 @@ export default function SetupPage() {
   const [error,     setError]     = useState('');
 
   const [form, setForm] = useState({
-    role:        'student' as Role,
+    role:        'alumni' as Role,
     department:  '',
     batch_year:  new Date().getFullYear(),
     student_id:  '',

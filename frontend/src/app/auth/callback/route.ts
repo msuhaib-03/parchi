@@ -21,13 +21,19 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/login?error=domain`);
         }
 
-        // New Google OAuth user: profile exists (trigger created it) but role is null
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, department')
           .eq('id', user.id)
           .single();
 
+        // Students must use email + password, not OAuth
+        if (profile?.role === 'student') {
+          await supabase.auth.signOut();
+          return NextResponse.redirect(`${origin}/login?error=students_use_email`);
+        }
+
+        // New Google OAuth user: profile exists (trigger created it) but role is null
         if (!profile?.role || !profile?.department) {
           return NextResponse.redirect(`${origin}/auth/setup`);
         }

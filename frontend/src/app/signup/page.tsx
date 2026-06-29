@@ -184,7 +184,7 @@ export default function SignupPage() {
             className="w-full flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 text-slate-700 dark:text-zinc-200 font-semibold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-60 transition-colors mb-2"
           >
             {googleLoading ? <Loader2 size={18} className="animate-spin" /> : <GoogleIcon />}
-            Continue with Google
+            <span>Continue with Google <span className="font-normal text-slate-400 dark:text-zinc-500 text-xs">· alumni &amp; teachers only</span></span>
           </button>
           <p className="text-center text-xs text-slate-400 dark:text-zinc-500 mb-5">
             You&apos;ll pick your role &amp; department on the next screen

@@ -23,8 +23,9 @@ function GoogleIcon() {
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
-  domain: 'That Google account isn\'t a MAJU community email. Use @maju.edu.pk, @jinnah.edu, or @gmail.com.',
-  oauth:  'Google sign-in failed. Please try again.',
+  domain:             'That Google account isn\'t a MAJU community email. Use @maju.edu.pk, @jinnah.edu, or @gmail.com.',
+  oauth:              'Google sign-in failed. Please try again.',
+  students_use_email: 'Student accounts use email & password — please sign in below.',
 };
 
 function LoginForm() {
@@ -97,7 +98,7 @@ function LoginForm() {
             className="w-full flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 text-slate-700 dark:text-zinc-200 font-semibold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-60 transition-colors"
           >
             {googleLoading ? <Loader2 size={18} className="animate-spin" /> : <GoogleIcon />}
-            Continue with Google
+            <span>Continue with Google <span className="font-normal text-slate-400 dark:text-zinc-500 text-xs">· alumni &amp; teachers</span></span>
           </button>
 
           {/* Divider */}
