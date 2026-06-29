@@ -364,6 +364,51 @@ export function extractIdFromEmail(email: string): string | null {
   return `${match[1]}${match[2]}-${match[3]}-${match[4]}`;
 }
 
+// ─── Salary Insights ──────────────────────────────────────────────────────────
+
+export type SalaryRoleLevel    = 'intern' | 'junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'director';
+export type SalaryExpRange     = '0-1' | '1-2' | '2-3' | '3-5' | '5-7' | '7-10' | '10+';
+export type SalaryLocation     = 'Karachi' | 'Lahore' | 'Islamabad' | 'Remote' | 'Abroad';
+export type SalaryEmployment   = 'full-time' | 'part-time' | 'contract' | 'freelance';
+
+export interface SalaryEntry {
+  id:                 string;
+  role_title:         string;
+  company:            string;
+  location:           SalaryLocation;
+  experience_range:   SalaryExpRange;
+  role_level:         SalaryRoleLevel;
+  employment_type:    SalaryEmployment;
+  monthly_salary_pkr: number;
+  department?:        string | null;
+  year_of_data:       number;
+  tags?:              string[] | null;
+  created_at:         string;
+}
+
+export interface MySalaryEntry extends SalaryEntry {
+  submitted_by: string;
+}
+
+export const SALARY_ROLE_LEVELS: { value: SalaryRoleLevel; label: string }[] = [
+  { value: 'intern',    label: 'Intern'     },
+  { value: 'junior',    label: 'Junior'     },
+  { value: 'mid',       label: 'Mid-level'  },
+  { value: 'senior',    label: 'Senior'     },
+  { value: 'lead',      label: 'Lead'       },
+  { value: 'manager',   label: 'Manager'    },
+  { value: 'director',  label: 'Director'   },
+];
+
+export const SALARY_EXP_RANGES: SalaryExpRange[] = ['0-1','1-2','2-3','3-5','5-7','7-10','10+'];
+export const SALARY_LOCATIONS:  SalaryLocation[]  = ['Karachi','Lahore','Islamabad','Remote','Abroad'];
+
+export function fmtPKR(n: number): string {
+  if (n >= 100000) return `PKR ${(n / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+  if (n >= 1000)   return `PKR ${Math.round(n / 1000)}K`;
+  return `PKR ${n.toLocaleString()}`;
+}
+
 // ─── API response helpers ─────────────────────────────────────────────────────
 
 export interface ApiError {
