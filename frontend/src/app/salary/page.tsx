@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import {
   TrendingUp, Shield, PlusCircle, Search, SlidersHorizontal,
-  ChevronDown, ChevronUp, Loader2, CheckCircle2, MapPin, Briefcase,
+  ChevronDown, ChevronUp, Loader2, CheckCircle2, MapPin, Briefcase, Lock,
 } from 'lucide-react';
 import type { SalaryEntry, MySalaryEntry, SalaryRoleLevel, SalaryLocation } from '@/types';
 import { fmtPKR, SALARY_ROLE_LEVELS, SALARY_LOCATIONS } from '@/types';
@@ -31,7 +31,9 @@ function calcMedian(nums: number[]): number {
   return s.length % 2 === 0 ? Math.round((s[m - 1] + s[m]) / 2) : s[m];
 }
 
-function aggregate(entries: SalaryEntry[], minCount = 3): SalaryGroup[] {
+const MIN_COUNT = 3;
+
+function buildMap(entries: SalaryEntry[]) {
   const map = new Map<string, SalaryEntry[]>();
   for (const e of entries) {
     const k = `${e.role_title.toLowerCase().trim()}|${e.role_level}`;
@@ -39,9 +41,13 @@ function aggregate(entries: SalaryEntry[], minCount = 3): SalaryGroup[] {
     bucket.push(e);
     map.set(k, bucket);
   }
+  return map;
+}
+
+function aggregate(entries: SalaryEntry[]): SalaryGroup[] {
   const groups: SalaryGroup[] = [];
-  for (const [, bucket] of map) {
-    if (bucket.length < minCount) continue;
+  for (const [, bucket] of buildMap(entries)) {
+    if (bucket.length < MIN_COUNT) continue;
     const salaries  = bucket.map((e) => e.monthly_salary_pkr);
     const companies = [...new Set(bucket.map((e) => e.company))].slice(0, 4);
     const locs      = [...new Set(bucket.map((e) => e.location))];
@@ -60,6 +66,29 @@ function aggregate(entries: SalaryEntry[], minCount = 3): SalaryGroup[] {
     });
   }
   return groups.sort((a, b) => b.count - a.count);
+}
+
+interface PendingGroup {
+  key:        string;
+  role_title: string;
+  role_level: string;
+  count:      number;
+  needed:     number;
+}
+
+function aggregatePending(entries: SalaryEntry[]): PendingGroup[] {
+  const pending: PendingGroup[] = [];
+  for (const [, bucket] of buildMap(entries)) {
+    if (bucket.length >= MIN_COUNT) continue;
+    pending.push({
+      key:        `pending|${bucket[0].role_title}|${bucket[0].role_level}`,
+      role_title: bucket[0].role_title,
+      role_level: bucket[0].role_level,
+      count:      bucket.length,
+      needed:     MIN_COUNT - bucket.length,
+    });
+  }
+  return pending.sort((a, b) => b.count - a.count);
 }
 
 // ─── Level badge ──────────────────────────────────────────────────────────────
@@ -142,6 +171,40 @@ function SalaryCard({ g }: { g: SalaryGroup }) {
   );
 }
 
+// ─── Pending Card ────────────────────────────────────────────────────────────
+
+function PendingCard({ g }: { g: PendingGroup }) {
+  const levelLabel = SALARY_ROLE_LEVELS.find((l) => l.value === g.role_level)?.label ?? g.role_level;
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-dashed border-slate-200 dark:border-zinc-700 rounded-2xl p-5 opacity-70">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-slate-700 dark:text-zinc-300 text-base">{g.role_title}</h3>
+          <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-1.5 ${levelColor[g.role_level] ?? levelColor.mid}`}>
+            {levelLabel}
+          </span>
+        </div>
+        <div className="text-right shrink-0 flex flex-col items-center gap-1">
+          <Lock size={16} className="text-slate-300 dark:text-zinc-600" />
+          <div className="text-xs text-slate-400 dark:text-zinc-500">data locked</div>
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="flex justify-between text-xs text-slate-400 dark:text-zinc-500 mb-1.5">
+          <span>{g.count} / {MIN_COUNT} submissions</span>
+          <span>{g.needed} more needed to unlock</span>
+        </div>
+        <div className="h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-300 dark:bg-indigo-700 rounded-full transition-all"
+            style={{ width: `${(g.count / MIN_COUNT) * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -190,7 +253,8 @@ export default function SalaryPage() {
     });
   }, [entries, search, location, level]);
 
-  const groups = useMemo(() => aggregate(filtered), [filtered]);
+  const groups  = useMemo(() => aggregate(filtered),        [filtered]);
+  const pending = useMemo(() => aggregatePending(filtered),  [filtered]);
 
   const totalSalaries = entries.length;
   const overallMedian = entries.length > 0 ? calcMedian(entries.map((e) => e.monthly_salary_pkr)) : 0;
@@ -311,17 +375,8 @@ export default function SalaryPage() {
           <div className="flex justify-center py-16">
             <Loader2 size={28} className="animate-spin text-indigo-400" />
           </div>
-        ) : groups.length > 0 ? (
-          <>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 mb-4">
-              {groups.length} role{groups.length !== 1 ? 's' : ''} · groups with fewer than 3 submissions are hidden to protect privacy
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {groups.map((g) => <SalaryCard key={g.key} g={g} />)}
-            </div>
-          </>
         ) : entries.length === 0 ? (
-          /* Empty state — no data at all */
+          /* No data at all */
           <div className="text-center py-20">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl mb-4">
               <TrendingUp size={28} className="text-indigo-400" />
@@ -337,8 +392,8 @@ export default function SalaryPage() {
               <PlusCircle size={16} /> Add the first salary
             </Link>
           </div>
-        ) : (
-          /* No match for current filters */
+        ) : filtered.length === 0 ? (
+          /* Filters returned nothing */
           <div className="text-center py-16">
             <Briefcase size={28} className="mx-auto text-slate-300 dark:text-zinc-600 mb-3" />
             <p className="text-sm text-slate-500 dark:text-zinc-400">No roles match your filters.</p>
@@ -349,6 +404,32 @@ export default function SalaryPage() {
               Clear filters
             </button>
           </div>
+        ) : (
+          /* Has data — show unlocked cards + pending stubs */
+          <>
+            {groups.length > 0 && (
+              <>
+                <p className="text-xs text-slate-400 dark:text-zinc-500 mb-4">
+                  {groups.length} role{groups.length !== 1 ? 's' : ''} unlocked · salary data is shown once a role has {MIN_COUNT}+ submissions
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                  {groups.map((g) => <SalaryCard key={g.key} g={g} />)}
+                </div>
+              </>
+            )}
+
+            {pending.length > 0 && (
+              <>
+                <p className="text-xs text-slate-400 dark:text-zinc-500 mb-3">
+                  {groups.length === 0 ? 'Collecting data — ' : 'Still collecting — '}
+                  {pending.length} role{pending.length !== 1 ? 's' : ''} need{pending.length === 1 ? 's' : ''} more submissions to unlock
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {pending.map((g) => <PendingCard key={g.key} g={g} />)}
+                </div>
+              </>
+            )}
+          </>
         )}
 
         {/* Footer note */}

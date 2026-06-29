@@ -132,7 +132,7 @@ export default function SalarySubmitPage() {
     }
 
     toast.success(existing ? 'Salary updated. Thanks for keeping it fresh!' : 'Salary added. Thanks for helping the community!');
-    router.push('/salary');
+    router.replace('/salary');
   };
 
   if (loading) {
