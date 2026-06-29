@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { CalendarDays, MapPin, Video, Users, Clock, Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { MapPin, Video, Users, Clock, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Event, EventRsvp, EventType } from '@/types';
 import { EVENT_TYPE_META, fmtEventDate, fmtEventTime } from '@/types';
